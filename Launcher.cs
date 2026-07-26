@@ -168,6 +168,161 @@ namespace LiteNexLauncher
     }
 
     // ══════════════════════════════════════════════════════════════════════════
+    //  DOUBLE-BUFFERED PANEL — scroll/repaint flicker'i önler
+    // ══════════════════════════════════════════════════════════════════════════
+    public class DBPanel : Panel
+    {
+        public DBPanel() { SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true); }
+        protected override CreateParams CreateParams { get { CreateParams cp = base.CreateParams; cp.ExStyle |= 0x02000000; return cp; } }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  GLOBAL KEYBOARD HOOK — WH_KEYBOARD_LL
+    // ══════════════════════════════════════════════════════════════════════════
+    public class GlobalKeyboardHook : IDisposable
+    {
+        private const int  WH_KEYBOARD_LL = 13;
+        private const int  WM_KEYDOWN     = 0x0100;
+        private const int  VK_RSHIFT      = 0xA1;
+
+        public event EventHandler RShiftPressed;
+
+        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+        private LowLevelKeyboardProc _proc;
+        private IntPtr _hookId = IntPtr.Zero;
+
+        [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+        [DllImport("user32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool UnhookWindowsHookEx(IntPtr hhk);
+        [DllImport("user32.dll")]  private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+        [DllImport("kernel32.dll")] private static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        public GlobalKeyboardHook()
+        {
+            _proc = HookCallback;
+            using (var curProc = System.Diagnostics.Process.GetCurrentProcess())
+            using (var curMod  = curProc.MainModule)
+                _hookId = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, GetModuleHandle(curMod.ModuleName), 0);
+        }
+
+        private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
+            {
+                int vkCode = Marshal.ReadInt32(lParam);
+                if (vkCode == VK_RSHIFT)
+                {
+                    var handler = RShiftPressed;
+                    if (handler != null) handler(this, EventArgs.Empty);
+                }
+            }
+            return CallNextHookEx(_hookId, nCode, wParam, lParam);
+        }
+
+        public void Dispose() { if (_hookId != IntPtr.Zero) { UnhookWindowsHookEx(_hookId); _hookId = IntPtr.Zero; } }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  PVP OVERLAY FORM — oyun üzerindeçıkan sarı bildirim
+    // ══════════════════════════════════════════════════════════════════════════
+    public class PvpOverlayForm : Form
+    {
+        [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr hWnd);
+        [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        private System.Windows.Forms.Timer _closeTimer;
+
+        public PvpOverlayForm()
+        {
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.ShowInTaskbar   = false;
+            this.TopMost         = true;
+            this.BackColor       = Color.FromArgb(12, 8, 24);
+            this.Opacity         = 0.94;
+            this.Size            = new Size(520, 380);
+            this.StartPosition   = FormStartPosition.Manual;
+
+            // Ekranın sağ alt köşesine yerleştir
+            Rectangle screen = Screen.PrimaryScreen.WorkingArea;
+            this.Location = new Point(screen.Right - this.Width - 24, screen.Bottom - this.Height - 24);
+
+            this.Paint += (s, e) => DrawOverlay(e.Graphics);
+
+            // 8 saniye sonra kapat
+            _closeTimer = new System.Windows.Forms.Timer { Interval = 8000 };
+            _closeTimer.Tick += (s, e) => { _closeTimer.Stop(); this.Close(); };
+            _closeTimer.Start();
+
+            // Tıklayınca kapat
+            this.Click += (s, e) => this.Close();
+        }
+
+        private void DrawOverlay(Graphics g)
+        {
+            int w = this.Width, h = this.Height;
+            g.SmoothingMode    = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+            // Arka plan
+            using (var bg = new System.Drawing.Drawing2D.LinearGradientBrush(new Rectangle(0, 0, w, h), Color.FromArgb(18, 12, 38), Color.FromArgb(8, 5, 18), System.Drawing.Drawing2D.LinearGradientMode.Vertical))
+                g.FillRectangle(bg, 0, 0, w, h);
+
+            // Mor kenarçizgisi
+            using (var border = new Pen(Color.FromArgb(139, 92, 246), 2))
+                g.DrawRectangle(border, 1, 1, w - 3, h - 3);
+
+            // Üst banner
+            using (var bannerBrush = new SolidBrush(Color.FromArgb(180, 99, 52, 210)))
+                g.FillRectangle(bannerBrush, 0, 0, w, 48);
+            using (var bannerBorder = new Pen(Color.FromArgb(139, 92, 246), 1))
+                g.DrawLine(bannerBorder, 0, 48, w, 48);
+
+            using (var fTitle = new Font("Segoe UI", 14F, FontStyle.Bold))
+                g.DrawString("⚡ LiteNex PvP Client — Mod Menüsü", fTitle, Brushes.White, new RectangleF(14, 10, w - 28, 36), new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
+
+            // Kapat ipucu
+            using (var fHint = new Font("Segoe UI", 7.5F))
+                g.DrawString("Tıkla veya 8 saniye bekle", fHint, new SolidBrush(Color.FromArgb(148, 163, 184)), new RectangleF(w - 130, 32, 120, 18), new StringFormat { Alignment = StringAlignment.Far });
+
+            // Mod satırları
+            string[] mods = new string[]
+            {
+                "📊  CPS Counter HUD (LMB / RMB)",
+                "⌨️  Keystrokes Visualizer (WASD)",
+                "🛡️  Armor & Item Durability HUD",
+                "💊  Potion Effects Overlay",
+                "🧭  Compass Direction HUD",
+                "⊕  Custom Crosshair Mod",
+                "🏃  Toggle Sprint & Zoomify"
+            };
+
+            int yStart = 62;
+            for (int i = 0; i < mods.Length; i++)
+            {
+                int rowY = yStart + i * 42;
+                // Satır arka planı
+                using (var rowBg = new SolidBrush(i % 2 == 0 ? Color.FromArgb(30, 139, 92, 246) : Color.FromArgb(15, 139, 92, 246)))
+                    g.FillRectangle(rowBg, 12, rowY, w - 24, 36);
+                // Sol aksentçizi
+                using (var accentPen = new Pen(Color.FromArgb(139, 92, 246), 3))
+                    g.DrawLine(accentPen, 12, rowY + 4, 12, rowY + 32);
+
+                using (var fMod = new Font("Segoe UI", 9.5F, FontStyle.Bold))
+                    g.DrawString(mods[i], fMod, Brushes.White, new RectangleF(24, rowY + 2, w - 80, 32), new StringFormat { LineAlignment = StringAlignment.Center });
+
+                using (var fStatus = new Font("Segoe UI", 8F))
+                    g.DrawString("✔ Aktif", fStatus, new SolidBrush(Color.FromArgb(16, 185, 129)), new RectangleF(w - 70, rowY + 2, 60, 32), new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center });
+            }
+
+            // Alt yazı
+            using (var fBottom = new Font("Segoe UI", 7.5F))
+                g.DrawString("LiteNex PvP Client  •  Modlar yapılandırmak için launcher'ı aç", fBottom, new SolidBrush(Color.FromArgb(100, 148, 163, 184)), new RectangleF(0, h - 22, w, 20), new StringFormat { Alignment = StringAlignment.Center });
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e) { if (_closeTimer != null) _closeTimer.Dispose(); base.OnFormClosed(e); }
+        protected override bool ShowWithoutActivation { get { return true; } }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     //  MAIN LAUNCHER FORM (LiteNex Client v6.0 Ultimate Edition)
     // ══════════════════════════════════════════════════════════════════════════
     public class MainForm : Form
@@ -201,6 +356,8 @@ namespace LiteNexLauncher
         private List<string> allMojangVersions = new List<string>();
         private List<string> savedProfiles = new List<string> { "LitePlayer", "ProGamer", "Steve", "Alex" };
         private Process activeMcProcess = null;
+        private GlobalKeyboardHook _kbHook;          // Global RSHIFT dinleyici
+        private PvpOverlayForm    _pvpOverlay;       // Oyun üstü overlay
 
         private List<Tuple<string, string>> savedServers = new List<Tuple<string, string>>
         {
@@ -220,6 +377,55 @@ namespace LiteNexLauncher
             DetectJavaAndSystem();
             StartSystemMonitor();
             CheckForGitHubUpdatesAsync(silent: true);
+
+            // ── Global RSHIFT hook kur ──────────────────────────────────────
+            try
+            {
+                _kbHook = new GlobalKeyboardHook();
+                _kbHook.RShiftPressed += OnRShiftPressed;
+            }
+            catch { }
+
+            this.FormClosed += (s, e) => { try { if (_kbHook != null) _kbHook.Dispose(); } catch {} };
+        }
+
+        private void OnRShiftPressed(object sender, EventArgs e)
+        {
+            // Sadece Minecraft öndeyken tepki ver
+            try
+            {
+                bool mcForeground = false;
+                if (activeMcProcess != null && !activeMcProcess.HasExited)
+                {
+                    IntPtr fg = GetForegroundWindow();
+                    mcForeground = (fg == activeMcProcess.MainWindowHandle);
+                }
+                if (!mcForeground) return;
+
+                // UI thread'inde çalıştır
+                if (this.InvokeRequired)
+                    this.BeginInvoke(new Action(ShowPvpOverlay));
+                else
+                    ShowPvpOverlay();
+            }
+            catch { }
+        }
+
+        [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+
+        private void ShowPvpOverlay()
+        {
+            try
+            {
+                if (_pvpOverlay != null && !_pvpOverlay.IsDisposed && _pvpOverlay.Visible)
+                {
+                    _pvpOverlay.Close();
+                    return; // İkinci RSHIFT: kapat (toggle)
+                }
+                _pvpOverlay = new PvpOverlayForm();
+                _pvpOverlay.Show();
+            }
+            catch { }
         }
 
         private void SetupLauncherPaths()
@@ -2627,8 +2833,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 652;
-        public const string CURRENT_VERSION_NAME = "6.5.2";
+        public const int CURRENT_VERSION_CODE = 653;
+        public const string CURRENT_VERSION_NAME = "6.5.3";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
