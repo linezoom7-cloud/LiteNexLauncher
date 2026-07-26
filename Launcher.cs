@@ -1932,10 +1932,11 @@ namespace LiteNexLauncher
 
         private Button MakeNavBtn(string text, int y)
         {
-            Button b = new Button { Text = text, Location = new Point(16, y), Size = new Size(228, 44), FlatStyle = FlatStyle.Flat, ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent, Font = new Font("Segoe UI", 10F, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(18, 0, 0, 0), Cursor = Cursors.Hand };
+            Button b = new Button { Location = new Point(16, y), Size = new Size(228, 44), FlatStyle = FlatStyle.Flat, ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent, Font = new Font("Segoe UI", 10F, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, Cursor = Cursors.Hand };
             b.FlatAppearance.BorderSize = 0;
+            b.Tag = text; // Orijinal metni Tag içinde sakla
             
-            // Custom Paint for Modern Lunar-style button states (with neon indicator)
+            // Custom Paint (Sadece bizim çizimimiz görüntülenecek)
             b.Paint += (s, e) =>
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
@@ -1946,7 +1947,7 @@ namespace LiteNexLauncher
                 if (isActive)
                 {
                     using (SolidBrush sb = new SolidBrush(ThemeManager.C_CARD2)) e.Graphics.FillRectangle(sb, 0, 0, b.Width, b.Height);
-                    // Left neon purple indicator
+                    // Left neon indicator
                     using (SolidBrush indicator = new SolidBrush(ThemeManager.C_CYAN)) e.Graphics.FillRectangle(indicator, 0, 8, 4, b.Height - 16);
                 }
                 else if (isHovered)
@@ -1954,9 +1955,10 @@ namespace LiteNexLauncher
                     using (SolidBrush sb = new SolidBrush(Color.FromArgb(25, 147, 51, 234))) e.Graphics.FillRectangle(sb, 0, 0, b.Width, b.Height);
                 }
 
-                // Text Custom Render
+                // Text Custom Render (Eski yazının üst üste binmesini önler)
+                string buttonText = b.Tag != null ? b.Tag.ToString() : "";
                 Color textCol = isActive ? ThemeManager.C_CYAN : (isHovered ? ThemeManager.C_TEXT : ThemeManager.C_MUTED);
-                TextRenderer.DrawText(e.Graphics, b.Text, b.Font, new Rectangle(18, 0, b.Width - 20, b.Height), textCol, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+                TextRenderer.DrawText(e.Graphics, buttonText, b.Font, new Rectangle(14, 0, b.Width - 20, b.Height), textCol, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
             };
 
             b.MouseEnter += (s, e) => { SoundSystem.PlayHover(); if (b.BackColor == Color.Transparent) { b.BackColor = Color.FromArgb(20, 147, 51, 234); b.Invalidate(); } };
@@ -2821,8 +2823,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 660;
-        public const string CURRENT_VERSION_NAME = "6.6.0";
+        public const int CURRENT_VERSION_CODE = 661;
+        public const string CURRENT_VERSION_NAME = "6.6.1";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
