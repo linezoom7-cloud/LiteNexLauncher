@@ -118,21 +118,21 @@ namespace LiteNexLauncher
     // ══════════════════════════════════════════════════════════════════════════
     public static class ThemeManager
     {
-        public static Color C_BG       = Color.FromArgb(  9,  8, 18);
-        public static Color C_SIDEBAR  = Color.FromArgb( 13, 12, 24);
-        public static Color C_TITLEBAR = Color.FromArgb(  7,  6, 14);
-        public static Color C_CARD     = Color.FromArgb( 19, 17, 34);
-        public static Color C_CARD2    = Color.FromArgb( 26, 23, 46);
-        public static Color C_BORDER   = Color.FromArgb( 42, 38, 72);
-        public static Color C_PURPLE   = Color.FromArgb(139, 92, 246);
-        public static Color C_PURPLE_D = Color.FromArgb( 99, 52, 210);
-        public static Color C_PURPLE_L = Color.FromArgb(167,139, 250);
-        public static Color C_BLUE     = Color.FromArgb( 59,130, 246);
-        public static Color C_CYAN     = Color.FromArgb( 34,211, 238);
-        public static Color C_EMERALD  = Color.FromArgb( 16,185, 129);
-        public static Color C_TEXT     = Color.FromArgb(241,245, 249);
-        public static Color C_MUTED    = Color.FromArgb(148,163, 184);
-        public static Color C_CONSOLE  = Color.FromArgb(  6,  5, 14);
+        public static Color C_BG       = Color.FromArgb(  7,  6, 15);
+        public static Color C_SIDEBAR  = Color.FromArgb( 11, 10, 22);
+        public static Color C_TITLEBAR = Color.FromArgb(  5,  4, 10);
+        public static Color C_CARD     = Color.FromArgb( 15, 13, 28);
+        public static Color C_CARD2    = Color.FromArgb( 22, 19, 40);
+        public static Color C_BORDER   = Color.FromArgb( 34, 30, 60);
+        public static Color C_PURPLE   = Color.FromArgb(147, 51, 234); // Premium Koyu Mor
+        public static Color C_PURPLE_D = Color.FromArgb(107, 33, 168);
+        public static Color C_PURPLE_L = Color.FromArgb(192, 132, 252);
+        public static Color C_BLUE     = Color.FromArgb( 37, 99, 235);
+        public static Color C_CYAN     = Color.FromArgb(  6, 182, 212); // Neon Turkuaz
+        public static Color C_EMERALD  = Color.FromArgb( 16, 185, 129);
+        public static Color C_TEXT     = Color.FromArgb(248, 250, 252);
+        public static Color C_MUTED    = Color.FromArgb(100, 116, 139);
+        public static Color C_CONSOLE  = Color.FromArgb(  4,  3,  8);
 
         public static void SetTheme(int themeIndex)
         {
@@ -1932,20 +1932,45 @@ namespace LiteNexLauncher
 
         private Button MakeNavBtn(string text, int y)
         {
-            Button b = new Button { Text = text, Location = new Point(16, y), Size = new Size(228, 44), FlatStyle = FlatStyle.Flat, ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent, Font = new Font("Segoe UI", 10F, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(14, 0, 0, 0), Cursor = Cursors.Hand };
+            Button b = new Button { Text = text, Location = new Point(16, y), Size = new Size(228, 44), FlatStyle = FlatStyle.Flat, ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent, Font = new Font("Segoe UI", 10F, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(18, 0, 0, 0), Cursor = Cursors.Hand };
             b.FlatAppearance.BorderSize = 0;
-            b.MouseEnter += (s, e) => { SoundSystem.PlayHover(); if (b.BackColor == Color.Transparent) { b.BackColor = Color.FromArgb(20, 139, 92, 246); b.ForeColor = Color.FromArgb(200, 180, 255); } };
-            b.MouseLeave += (s, e) => { if (b.BackColor != ThemeManager.C_CARD2) { b.BackColor = Color.Transparent; b.ForeColor = ThemeManager.C_MUTED; } };
+            
+            // Custom Paint for Modern Lunar-style button states (with neon indicator)
+            b.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                bool isActive = (b.BackColor == ThemeManager.C_CARD2);
+                bool isHovered = (b.BackColor == Color.FromArgb(20, 147, 51, 234));
+
+                // Background
+                if (isActive)
+                {
+                    using (SolidBrush sb = new SolidBrush(ThemeManager.C_CARD2)) e.Graphics.FillRectangle(sb, 0, 0, b.Width, b.Height);
+                    // Left neon purple indicator
+                    using (SolidBrush indicator = new SolidBrush(ThemeManager.C_CYAN)) e.Graphics.FillRectangle(indicator, 0, 8, 4, b.Height - 16);
+                }
+                else if (isHovered)
+                {
+                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(25, 147, 51, 234))) e.Graphics.FillRectangle(sb, 0, 0, b.Width, b.Height);
+                }
+
+                // Text Custom Render
+                Color textCol = isActive ? ThemeManager.C_CYAN : (isHovered ? ThemeManager.C_TEXT : ThemeManager.C_MUTED);
+                TextRenderer.DrawText(e.Graphics, b.Text, b.Font, new Rectangle(18, 0, b.Width - 20, b.Height), textCol, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+            };
+
+            b.MouseEnter += (s, e) => { SoundSystem.PlayHover(); if (b.BackColor == Color.Transparent) { b.BackColor = Color.FromArgb(20, 147, 51, 234); b.Invalidate(); } };
+            b.MouseLeave += (s, e) => { if (b.BackColor != ThemeManager.C_CARD2) { b.BackColor = Color.Transparent; b.Invalidate(); } };
             return b;
         }
 
         private void SetNavActive(Button active)
         {
-            foreach (Button b in new[] { btnNavPlay, btnNavVersions, btnNavServers, btnNavSettings })
+            foreach (Button b in new[] { btnNavPlay, btnNavVersions, btnNavServers, btnNavPvpMods, btnNavSettings })
             {
                 if (b == null) continue;
                 b.BackColor = b == active ? ThemeManager.C_CARD2    : Color.Transparent;
-                b.ForeColor = b == active ? ThemeManager.C_PURPLE_L : ThemeManager.C_MUTED;
+                b.Invalidate();
             }
         }
 
@@ -2796,8 +2821,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 656;
-        public const string CURRENT_VERSION_NAME = "6.5.6";
+        public const int CURRENT_VERSION_CODE = 658;
+        public const string CURRENT_VERSION_NAME = "6.5.8";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {

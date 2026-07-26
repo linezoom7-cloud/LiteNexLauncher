@@ -1,8 +1,8 @@
 {
-  "version": "6.5.6",
-  "versionCode": 656,
+  "version": "6.5.8",
+  "versionCode": 658,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \u2615 Eski Minecraft s\u00fcr\u00fcmleri i\u00e7in Java 8 otomatik se\u00e7im deste\u011fi (ClassCastException hatasi giderildi)",
+  "changelog": "\u2022 \u2728 Lunar/Feather tarz\u0131 premium neon g\u00f6rsel tasarım g\u00fcncellemesi yapildi\n\u2022 \ud83d\udcfa Yan navigasyon men\u00fcs\u00fc canli neon indikat\u00f6rle yenilendi",
   "mandatory": false
 }
