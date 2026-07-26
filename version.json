@@ -1,0 +1,8 @@
+{
+  "version": "6.5.0",
+  "versionCode": 650,
+  "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
+  "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
+  "changelog": "• ⚔️ PvP Client Modları oyun içi Right Shift (RSHIFT) kısayol menüsüne taşındı\n• Oyun içi canlı HUD ve Mod yönetimi güncellendi",
+  "mandatory": false
+}
