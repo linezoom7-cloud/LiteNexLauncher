@@ -1044,18 +1044,51 @@ namespace LiteNexSetup
     // ══════════════════════════════════════════════════════════════════════════
     public static class Program
     {
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool IsIconic(IntPtr hWnd);
+
         [STAThread]
         static void Main(string[] args)
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            if (args != null && args.Length > 0 && (args[0].Equals("/uninstall", StringComparison.OrdinalIgnoreCase) || args[0].Equals("-uninstall", StringComparison.OrdinalIgnoreCase)))
+            // ── Tek Örnek Koruması (Single Instance Mutex) ──────────────────
+            bool isUninstall = args != null && args.Length > 0 &&
+                (args[0].Equals("/uninstall", StringComparison.OrdinalIgnoreCase) ||
+                 args[0].Equals("-uninstall", StringComparison.OrdinalIgnoreCase));
+
+            string mutexName = isUninstall ? "LiteNexUninstallMutex_v6" : "LiteNexSetupMutex_v6";
+
+            bool createdNew;
+            using (System.Threading.Mutex mutex = new System.Threading.Mutex(true, mutexName, out createdNew))
             {
-                Application.Run(new UninstallForm());
-            }
-            else
-            {
-                Application.Run(new SetupForm());
+                if (!createdNew)
+                {
+                    // Zaten çalışıyor — mevcut pencereyi öne getir
+                    System.Diagnostics.Process current = System.Diagnostics.Process.GetCurrentProcess();
+                    foreach (System.Diagnostics.Process proc in System.Diagnostics.Process.GetProcessesByName(current.ProcessName))
+                    {
+                        if (proc.Id != current.Id && proc.MainWindowHandle != IntPtr.Zero)
+                        {
+                            IntPtr hWnd = proc.MainWindowHandle;
+                            if (IsIconic(hWnd)) ShowWindow(hWnd, 9); // SW_RESTORE
+                            SetForegroundWindow(hWnd);
+                            break;
+                        }
+                    }
+                    return;
+                }
+
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+
+                if (isUninstall)
+                {
+                    Application.Run(new UninstallForm());
+                }
+                else
+                {
+                    Application.Run(new SetupForm());
+                }
             }
         }
     }

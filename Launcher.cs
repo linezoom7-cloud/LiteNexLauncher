@@ -2896,19 +2896,45 @@ namespace LiteNexLauncher
 
     public static class Program
     {
+        [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
+        [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr hWnd);
+
         [STAThread]
         static void Main()
         {
-            try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072|(SecurityProtocolType)768|SecurityProtocolType.Tls; } catch {}
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-
-            SteamUpdaterSplashForm splash = new SteamUpdaterSplashForm();
-            Application.Run(splash);
-
-            if (splash.ShouldLaunchMain)
+            // ── Tek Örnek Koruması (Single Instance Mutex) ──────────────────
+            bool createdNew;
+            using (System.Threading.Mutex mutex = new System.Threading.Mutex(true, "LiteNexClientMutex_v6", out createdNew))
             {
-                Application.Run(new MainForm());
+                if (!createdNew)
+                {
+                    // Zaten çalışıyor — mevcut pencereyi öne getir
+                    System.Diagnostics.Process current = System.Diagnostics.Process.GetCurrentProcess();
+                    foreach (System.Diagnostics.Process proc in System.Diagnostics.Process.GetProcessesByName(current.ProcessName))
+                    {
+                        if (proc.Id != current.Id && proc.MainWindowHandle != IntPtr.Zero)
+                        {
+                            IntPtr hWnd = proc.MainWindowHandle;
+                            if (IsIconic(hWnd)) ShowWindow(hWnd, 9); // SW_RESTORE
+                            SetForegroundWindow(hWnd);
+                            break;
+                        }
+                    }
+                    return;
+                }
+
+                try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072|(SecurityProtocolType)768|SecurityProtocolType.Tls; } catch {}
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+
+                SteamUpdaterSplashForm splash = new SteamUpdaterSplashForm();
+                Application.Run(splash);
+
+                if (splash.ShouldLaunchMain)
+                {
+                    Application.Run(new MainForm());
+                }
             }
         }
     }
