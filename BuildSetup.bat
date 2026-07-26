@@ -9,7 +9,6 @@ C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:Lite
 
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] Launcher compilation failed!
-    pause
     exit /b %ERRORLEVEL%
 )
 
@@ -25,4 +24,3 @@ if %ERRORLEVEL% EQU 0 (
 ) else (
     echo [ERROR] Setup Installer compilation failed!
 )
-pause

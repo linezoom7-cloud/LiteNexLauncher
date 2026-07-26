@@ -5,12 +5,11 @@ echo   Target: linezoom7-cloud/LiteNexLauncher
 echo ===================================================
 echo.
 
-echo [1/3] Building latest binaries (LiteNex.exe & LiteNexSetup.exe)...
-call BuildSetup.bat
+echo [1/3] Building latest binaries (LiteNex.exe ^& LiteNexSetup.exe)...
+call BuildSetup.bat /nopause
 
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] Build failed! Aborting.
-    pause
     exit /b %ERRORLEVEL%
 )
 
@@ -25,7 +24,6 @@ if %ERRORLEVEL% NEQ 0 (
         set GIT_EXE="%LocalAppData%\Programs\Git\cmd\git.exe"
     ) else (
         echo [HATA] Git bulunamadi.
-        pause
         exit /b 1
     )
 )
@@ -42,7 +40,8 @@ echo [3/3] Committing and Pushing to GitHub...
 
 %GIT_EXE% add .
 
-set /p commitMsg="Lutfen guncelleme notunu (commit) girin [Varsayilan: LiteNex Update]: "
+set commitMsg=
+if not "%~1"=="" set commitMsg=%~1
 if "%commitMsg%"=="" set commitMsg=LiteNex Update
 
 %GIT_EXE% commit -m "%commitMsg%"
@@ -58,4 +57,3 @@ if %ERRORLEVEL% EQU 0 (
 ) else (
     echo [NOTE] Git push sirasinda GitHub giris ekrani acilmis olabilir.
 )
-pause
