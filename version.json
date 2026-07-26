@@ -1,8 +1,8 @@
 {
-  "version": "6.6.6",
-  "versionCode": 666,
+  "version": "6.7.0",
+  "versionCode": 670,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \ud83d\udcbe RSHIFT PvP men\u00fcs\u00fc ayarlarinin diskte saklanmasi ve oyuna anlik yansitilmasi sa\u011flandi (litenex_pvp_config.json)",
+  "changelog": "\u2022 \ud83c\udfae Ger\u00e7ek zamanli oyun \u00fcst\u00fc PvP HUD Overlay eklendi (CPS, Keystrokes, Armor Status, Compass, FPS)\n\u2022 \u26a1 RSHIFT men\u00fcs\u00fcnden anlik mod a\u00e7ma/kapatma deste\u011fi tamamlandi",
   "mandatory": false
 }

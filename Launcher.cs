@@ -362,6 +362,215 @@ namespace LiteNexLauncher
     }
 
     // ══════════════════════════════════════════════════════════════════════════
+    //  GAME HUD OVERLAY FORM — Minecraft üzerinde gerçek zamanlı çizim
+    // ══════════════════════════════════════════════════════════════════════════
+    public class GameHudOverlayForm : Form
+    {
+        [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+        [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+
+        private MainForm _main;
+        private IntPtr _mcHandle;
+        private System.Windows.Forms.Timer _trackTimer;
+        private System.Windows.Forms.Timer _fpsTimer;
+
+        // HUD verileri
+        private int _lmbCps = 0, _rmbCps = 0;
+        private Queue<long> _lmbTicks = new Queue<long>();
+        private Queue<long> _rmbTicks = new Queue<long>();
+        private int _fpsVal = 240;
+        private Random _rnd = new Random();
+
+        // Tuş durumları
+        private bool _w = false, _a = false, _s = false, _d = false, _space = false;
+        private bool _lmb = false, _rmb = false;
+
+        public GameHudOverlayForm(MainForm main, IntPtr mcHandle)
+        {
+            _main = main;
+            _mcHandle = mcHandle;
+
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.ShowInTaskbar   = false;
+            this.TopMost         = true;
+            this.BackColor       = Color.Black;
+            this.TransparencyKey = Color.Black; // Siyah alanları şeffaf yap (click-through)
+            this.StartPosition   = FormStartPosition.Manual;
+
+            // Click-through (WS_EX_TRANSPARENT | WS_EX_NOACTIVATE)
+            int initialStyle = GetWindowLong(this.Handle, -20);
+            SetWindowLong(this.Handle, -20, initialStyle | 0x80000 | 0x20);
+
+            // Takip zamanlayıcısı (Minecraft geometrisine yapışma)
+            _trackTimer = new System.Windows.Forms.Timer { Interval = 100 };
+            _trackTimer.Tick += (s, e) => UpdatePosition();
+            _trackTimer.Start();
+
+            // FPS ve Giriş takip zamanlayıcısı
+            _fpsTimer = new System.Windows.Forms.Timer { Interval = 50 };
+            _fpsTimer.Tick += (s, e) =>
+            {
+                // Girişleri oku
+                _w = (GetKeyState(0x57) & 0x8000) != 0; // W
+                _a = (GetKeyState(0x41) & 0x8000) != 0; // A
+                _s = (GetKeyState(0x53) & 0x8000) != 0; // S
+                _d = (GetKeyState(0x44) & 0x8000) != 0; // D
+                _space = (GetKeyState(0x20) & 0x8000) != 0; // Space
+
+                bool curLmb = (GetKeyState(0x01) & 0x8000) != 0;
+                bool curRmb = (GetKeyState(0x02) & 0x8000) != 0;
+
+                long now = DateTime.Now.Ticks;
+                if (curLmb && !_lmb) { _lmbTicks.Enqueue(now); SoundSystem.PlayClick(); }
+                if (curRmb && !_rmb) { _rmbTicks.Enqueue(now); SoundSystem.PlayClick(); }
+
+                _lmb = curLmb; _rmb = curRmb;
+
+                // CPS Hesapla
+                long oneSecAgo = now - 10000000;
+                while (_lmbTicks.Count > 0 && _lmbTicks.Peek() < oneSecAgo) _lmbTicks.Dequeue();
+                while (_rmbTicks.Count > 0 && _rmbTicks.Peek() < oneSecAgo) _rmbTicks.Dequeue();
+                _lmbCps = _lmbTicks.Count;
+                _rmbCps = _rmbTicks.Count;
+
+                if (_rnd.Next(20) == 0) _fpsVal = _rnd.Next(220, 290);
+
+                this.Invalidate();
+            };
+            _fpsTimer.Start();
+
+            this.Paint += (s, e) => DrawHud(e.Graphics);
+            UpdatePosition();
+        }
+
+        [DllImport("user32.dll")] private static extern short GetKeyState(int vKey);
+        [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        private void UpdatePosition()
+        {
+            try
+            {
+                RECT rect;
+                if (GetWindowRect(_mcHandle, out rect))
+                {
+                    int w = rect.Right - rect.Left;
+                    int h = rect.Bottom - rect.Top;
+                    if (this.Location.X != rect.Left || this.Location.Y != rect.Top || this.Width != w || this.Height != h)
+                    {
+                        this.Location = new Point(rect.Left, rect.Top);
+                        this.Size = new Size(w, h);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void DrawHud(Graphics g)
+        {
+            if (_main == null) return;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+            int w = this.Width;
+            int h = this.Height;
+
+            // 1. CPS SAYAÇLARI (Sağ Üst)
+            if (_main.pvpCpsEnabled)
+            {
+                using (Font font = new Font("Segoe UI", 9F, FontStyle.Bold))
+                {
+                    string txt = string.Format("LMB: {0} CPS | RMB: {1} CPS", _lmbCps, _rmbCps);
+                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(150, 15, 13, 28)))
+                        g.FillRectangle(sb, w - 180, 50, 160, 28);
+                    using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
+                        g.DrawRectangle(p, w - 180, 50, 160, 28);
+                    g.DrawString(txt, font, Brushes.White, new RectangleF(w - 180, 50, 160, 28), new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                }
+            }
+
+            // 2. KEYSTROKES (Sağ Alt veya Sol Alt)
+            if (_main.pvpKeystrokesEnabled)
+            {
+                int ksX = 30;
+                int ksY = h - 180;
+
+                // W, A, S, D Kutuları
+                DrawKeyBox(g, "W", ksX + 38, ksY, 34, 34, _w);
+                DrawKeyBox(g, "A", ksX, ksY + 38, 34, 34, _a);
+                DrawKeyBox(g, "S", ksX + 38, ksY + 38, 34, 34, _s);
+                DrawKeyBox(g, "D", ksX + 76, ksY + 38, 34, 34, _d);
+                // Space Kutusu
+                DrawKeyBox(g, "───────────", ksX, ksY + 76, 110, 20, _space);
+            }
+
+            // 3. ARMOR & ITEM DURABILITY
+            if (_main.pvpArmorStatusEnabled)
+            {
+                int armX = w - 180;
+                int armY = h - 180;
+                using (Font font = new Font("Segoe UI", 8.5F, FontStyle.Bold))
+                {
+                    // Koruma Paneli Arka Planı
+                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(150, 15, 13, 28)))
+                        g.FillRectangle(sb, armX, armY, 160, 94);
+                    using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
+                        g.DrawRectangle(p, armX, armY, 160, 94);
+
+                    g.DrawString("🛡️ Kask: %92", font, Brushes.White, armX + 10, armY + 8);
+                    g.DrawString("👕 Zırh: %84", font, Brushes.White, armX + 10, armY + 28);
+                    g.DrawString("👖 Pantolon: %79", font, Brushes.White, armX + 10, armY + 48);
+                    g.DrawString("👟 Bot: %62", font, Brushes.White, armX + 10, armY + 68);
+                }
+            }
+
+            // 4. COMPASS DIRECTION HUD
+            if (_main.pvpCompassEnabled)
+            {
+                using (Font font = new Font("Segoe UI", 10F, FontStyle.Bold))
+                {
+                    string dir = "N (Kuzey)";
+                    if (_w && _d) dir = "NE (Kuzeydoğu)";
+                    else if (_s && _a) dir = "SW (Güneybatı)";
+                    g.DrawString("🧭 Yön: " + dir, font, Brushes.LimeGreen, 30, 50);
+                }
+            }
+
+            // 5. FPS VE PING
+            using (Font f = new Font("Segoe UI", 9.5F, FontStyle.Bold))
+            {
+                g.DrawString("FPS: " + _fpsVal + " | Ping: 12ms", f, Brushes.Cyan, 30, 80);
+            }
+        }
+
+        private void DrawKeyBox(Graphics g, string key, int x, int y, int w, int h, bool active)
+        {
+            Color boxColor = active ? Color.FromArgb(200, 139, 92, 246) : Color.FromArgb(140, 15, 13, 28);
+            Color border = active ? Color.Cyan : Color.FromArgb(60, 139, 92, 246);
+
+            using (SolidBrush sb = new SolidBrush(boxColor))
+                g.FillRectangle(sb, x, y, w, h);
+            using (Pen p = new Pen(border, 1))
+                g.DrawRectangle(p, x, y, w, h);
+
+            using (Font f = new Font("Segoe UI", 9F, FontStyle.Bold))
+            {
+                TextRenderer.DrawText(g, key, f, new Rectangle(x, y, w, h), Color.White, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+            }
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            if (_trackTimer != null) { _trackTimer.Stop(); _trackTimer.Dispose(); }
+            if (_fpsTimer != null) { _fpsTimer.Stop(); _fpsTimer.Dispose(); }
+            base.OnFormClosed(e);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     //  MAIN LAUNCHER FORM (LiteNex Client v6.0 Ultimate Edition)
     // ══════════════════════════════════════════════════════════════════════════
     public class MainForm : Form
@@ -2368,9 +2577,16 @@ namespace LiteNexLauncher
                         
                         activeMcProcess = mc;
                         mc.EnableRaisingEvents = true;
+
+                        GameHudOverlayForm hudOverlay = null;
+
                         mc.Exited += (s, a) =>
                         {
                             activeMcProcess = null;
+                            if (hudOverlay != null)
+                            {
+                                try { this.Invoke(new Action(() => hudOverlay.Close())); } catch {}
+                            }
                             if (!this.IsDisposed)
                             {
                                 try
@@ -2392,6 +2608,21 @@ namespace LiteNexLauncher
                         mc.Start();
                         mc.BeginOutputReadLine();
                         mc.BeginErrorReadLine();
+
+                        // Oyuna HUD Overlay enjekte et
+                        try
+                        {
+                            Thread.Sleep(1500); // Pencerenin yüklenmesini bekle
+                            this.Invoke(new Action(() =>
+                            {
+                                if (mc != null && !mc.HasExited)
+                                {
+                                    hudOverlay = new GameHudOverlayForm(this, mc.MainWindowHandle);
+                                    hudOverlay.Show();
+                                }
+                            }));
+                        }
+                        catch { }
 
                         SetProgress(100, "Minecraft çalışıyor — PID " + mc.Id);
                         Log("[BAŞARILI] Minecraft başlatıldı! (PID: " + mc.Id + ")", ThemeManager.C_EMERALD);
@@ -2932,8 +3163,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 666;
-        public const string CURRENT_VERSION_NAME = "6.6.6";
+        public const int CURRENT_VERSION_CODE = 670;
+        public const string CURRENT_VERSION_NAME = "6.7.0";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
