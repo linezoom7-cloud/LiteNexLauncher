@@ -1,8 +1,8 @@
 {
-  "version": "6.7.4",
-  "versionCode": 674,
+  "version": "6.7.5",
+  "versionCode": 675,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \u26a1 Oyun içi PvP HUD verileri tamamen canli ve doğru verilere senkronize edildi (FPS, Yön, Dayaniklilik)",
+  "changelog": "\u2022 \ud83d\udee1\ufe0f Antivir\u00fcs ve Windows Defender hatal\u0131 uyar\u0131 oranlar\u0131 resmi Assembly meta verileri ile azalt\u0131ld\u0131",
   "mandatory": false
 }

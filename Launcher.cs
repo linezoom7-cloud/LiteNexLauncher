@@ -9,10 +9,22 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
+
+// ── ASSEMBLY METADATA (Windows Defender False Positive Azaltıcı) ──────────────
+[assembly: AssemblyTitle("LiteNex PvP Client Launcher")]
+[assembly: AssemblyDescription("LiteNex Minecraft PvP Engine and Interactive HUD Client")]
+[assembly: AssemblyCompany("LiteNex Studios")]
+[assembly: AssemblyProduct("LiteNex Client")]
+[assembly: AssemblyCopyright("Copyright © 2026 LiteNex Studios")]
+[assembly: AssemblyTrademark("LiteNex")]
+[assembly: AssemblyVersion("6.7.5.0")]
+[assembly: AssemblyFileVersion("6.7.5.0")]
+[assembly: Guid("8f3954ce-c84a-4d2c-8cb9-bc22394fae6f")]
 
 namespace LiteNexLauncher
 {
@@ -3183,8 +3195,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 674;
-        public const string CURRENT_VERSION_NAME = "6.7.4";
+        public const int CURRENT_VERSION_CODE = 675;
+        public const string CURRENT_VERSION_NAME = "6.7.5";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
