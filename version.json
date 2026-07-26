@@ -1,8 +1,8 @@
 {
-  "version": "6.7.7",
-  "versionCode": 677,
+  "version": "6.7.8",
+  "versionCode": 678,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "• 📊 PvP Modları düzeltildi, tüm göstergeler aktif ve dinamik hale getirildi\n• 🛡️ Güvenlik taraması ve Windows Defender yanlış pozitif uyarıları giderildi",
+  "changelog": "• 🛡️ Global Keyboard Hook (SetWindowsHookEx) kaldırıldı, antivirüs engellemeleri tamamen çözüldü\n• 📊 Akıcı tuş algılama ve performans iyileştirmeleri yapıldı",
   "mandatory": false
 }

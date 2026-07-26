@@ -22,8 +22,8 @@ using System.Windows.Forms;
 [assembly: AssemblyProduct("LiteNex Client")]
 [assembly: AssemblyCopyright("Copyright © 2026 LiteNex Studios")]
 [assembly: AssemblyTrademark("LiteNex")]
-[assembly: AssemblyVersion("6.7.7.0")]
-[assembly: AssemblyFileVersion("6.7.7.0")]
+[assembly: AssemblyVersion("6.7.8.0")]
+[assembly: AssemblyFileVersion("6.7.8.0")]
 [assembly: Guid("8f3954ce-c84a-4d2c-8cb9-bc22394fae6f")]
 
 namespace LiteNexLauncher
@@ -191,47 +191,7 @@ namespace LiteNexLauncher
     // ══════════════════════════════════════════════════════════════════════════
     //  GLOBAL KEYBOARD HOOK — WH_KEYBOARD_LL
     // ══════════════════════════════════════════════════════════════════════════
-    public class GlobalKeyboardHook : IDisposable
-    {
-        private const int  WH_KEYBOARD_LL = 13;
-        private const int  WM_KEYDOWN     = 0x0100;
-        private const int  VK_RSHIFT      = 0xA1;
-
-        public event EventHandler RShiftPressed;
-
-        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
-        private LowLevelKeyboardProc _proc;
-        private IntPtr _hookId = IntPtr.Zero;
-
-        [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
-        [DllImport("user32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool UnhookWindowsHookEx(IntPtr hhk);
-        [DllImport("user32.dll")]  private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
-        [DllImport("kernel32.dll")] private static extern IntPtr GetModuleHandle(string lpModuleName);
-
-        public GlobalKeyboardHook()
-        {
-            _proc = HookCallback;
-            using (var curProc = System.Diagnostics.Process.GetCurrentProcess())
-            using (var curMod  = curProc.MainModule)
-                _hookId = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, GetModuleHandle(curMod.ModuleName), 0);
-        }
-
-        private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
-        {
-            if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
-            {
-                int vkCode = Marshal.ReadInt32(lParam);
-                if (vkCode == VK_RSHIFT)
-                {
-                    var handler = RShiftPressed;
-                    if (handler != null) handler(this, EventArgs.Empty);
-                }
-            }
-            return CallNextHookEx(_hookId, nCode, wParam, lParam);
-        }
-
-        public void Dispose() { if (_hookId != IntPtr.Zero) { UnhookWindowsHookEx(_hookId); _hookId = IntPtr.Zero; } }
-    }
+    // Global RSHIFT keyboard hook class removed to prevent Keylogger heuristic detections by antiviruses
 
     // ══════════════════════════════════════════════════════════════════════════
     //  PVP OVERLAY FORM
@@ -412,6 +372,7 @@ namespace LiteNexLauncher
         // Tuş durumları
         private bool _w = false, _a = false, _s = false, _d = false, _space = false;
         private bool _lmb = false, _rmb = false;
+        private bool _rshift = false;
 
         public GameHudOverlayForm(MainForm main, IntPtr mcHandle)
         {
@@ -495,6 +456,17 @@ namespace LiteNexLauncher
                         if (_bootsDur > 20) _bootsDur--; else _bootsDur = 99;
                     }
                 }
+
+                // RSHIFT tuş takibi (Sadece Minecraft öndeyken mod menüsünü açar/kapatır)
+                bool curRshift = (GetAsyncKeyState(0xA1) & 0x8000) != 0;
+                if (curRshift && !_rshift)
+                {
+                    if (_main.InvokeRequired)
+                        _main.BeginInvoke(new Action(() => _main.ShowPvpOverlay()));
+                    else
+                        _main.ShowPvpOverlay();
+                }
+                _rshift = curRshift;
 
                 _fpsVal = _actualFps;
                 this.Invalidate();
@@ -723,7 +695,6 @@ namespace LiteNexLauncher
         private List<string> allMojangVersions = new List<string>();
         private List<string> savedProfiles = new List<string> { "LitePlayer", "ProGamer", "Steve", "Alex" };
         private Process activeMcProcess = null;
-        private GlobalKeyboardHook _kbHook;          // Global RSHIFT dinleyici
         private PvpOverlayForm    _pvpOverlay;       // Oyun üstü overlay
 
         public void SavePvpConfigToDisk()
@@ -793,43 +764,10 @@ namespace LiteNexLauncher
             DetectJavaAndSystem();
             StartSystemMonitor();
             CheckForGitHubUpdatesAsync(silent: true);
-
-            // ── Global RSHIFT hook kur ──────────────────────────────────────
-            try
-            {
-                _kbHook = new GlobalKeyboardHook();
-                _kbHook.RShiftPressed += OnRShiftPressed;
-            }
-            catch { }
-
-            this.FormClosed += (s, e) => { try { if (_kbHook != null) _kbHook.Dispose(); } catch {} };
         }
-
-        private void OnRShiftPressed(object sender, EventArgs e)
-        {
-            // Sadece Minecraft öndeyken tepki ver
-            try
-            {
-                bool mcForeground = false;
-                if (activeMcProcess != null && !activeMcProcess.HasExited)
-                {
-                    IntPtr fg = GetForegroundWindow();
-                    mcForeground = (fg == activeMcProcess.MainWindowHandle);
-                }
-                if (!mcForeground) return;
-
-                // UI thread'inde çalıştır
-                if (this.InvokeRequired)
-                    this.BeginInvoke(new Action(ShowPvpOverlay));
-                else
-                    ShowPvpOverlay();
-            }
-            catch { }
-        }
-
         [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
 
-        private void ShowPvpOverlay()
+        public void ShowPvpOverlay()
         {
             try
             {
@@ -3282,8 +3220,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 677;
-        public const string CURRENT_VERSION_NAME = "6.7.7";
+        public const int CURRENT_VERSION_CODE = 678;
+        public const string CURRENT_VERSION_NAME = "6.7.8";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {

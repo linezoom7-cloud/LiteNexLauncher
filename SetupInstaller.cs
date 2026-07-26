@@ -16,8 +16,8 @@ using Microsoft.Win32;
 [assembly: AssemblyProduct("LiteNex Installer")]
 [assembly: AssemblyCopyright("Copyright © 2026 LiteNex Studios")]
 [assembly: AssemblyTrademark("LiteNex")]
-[assembly: AssemblyVersion("6.7.7.0")]
-[assembly: AssemblyFileVersion("6.7.7.0")]
+[assembly: AssemblyVersion("6.7.8.0")]
+[assembly: AssemblyFileVersion("6.7.8.0")]
 [assembly: Guid("8f3954ce-c84a-4d2c-8cb9-bc22394fae7a")]
 
 namespace LiteNexSetup
