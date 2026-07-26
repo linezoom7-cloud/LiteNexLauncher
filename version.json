@@ -1,8 +1,8 @@
 {
-  "version": "6.5.1",
-  "versionCode": 651,
+  "version": "6.5.2",
+  "versionCode": 652,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "• 🔒 Çift açılma engeli eklendi (Global Mutex)\n• ⚔️ PvP modları oyun içi Right Shift kısayoluna taşındı",
+  "changelog": "• ⚡ MC sürüm indirme hızı arttirildi (24 paralel thread, 64 bağlantı)\n• 🔒 Çift açılma engeli (Global Mutex)",
   "mandatory": false
 }

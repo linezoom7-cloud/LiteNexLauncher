@@ -2331,13 +2331,16 @@ namespace LiteNexLauncher
 
                 SetProgress(30, "Kütüphaneler kontrol ediliyor...");
 
-                // libraries + natives
+                // libraries + natives — PARALEL İNDİRME (24 thread)
                 if (detailDict.ContainsKey("libraries"))
                 {
                     IList libs = detailDict["libraries"] as IList;
                     if (libs == null) throw new Exception("libraries parse hatası.");
-                    Log("[LIBRARY] " + libs.Count + " kütüphane kontrol ediliyor...", Color.Yellow);
-                    int downloaded = 0;
+
+                    // Önce tüm kütüphaneleri listele, mevcut olanları cpList'e ekle
+                    var missingLibs  = new List<Tuple<string, string, bool>>(); // url, path, isNative
+                    var cpListLock   = new object();
+                    var nativePaths  = new List<string>();
 
                     foreach (object libObj in libs)
                     {
@@ -2355,8 +2358,10 @@ namespace LiteNexLauncher
                             {
                                 string lp = Path.Combine(librariesDir, art["path"].ToString().Replace('/', Path.DirectorySeparatorChar));
                                 EnsureDir(Path.GetDirectoryName(lp));
-                                if (!File.Exists(lp) || new FileInfo(lp).Length < 100) { try { wc.DownloadFile(art["url"].ToString(), lp); downloaded++; } catch {} }
-                                if (File.Exists(lp)) cpList.Add(lp);
+                                if (!File.Exists(lp) || new FileInfo(lp).Length < 100)
+                                    missingLibs.Add(Tuple.Create(art["url"].ToString(), lp, false));
+                                else
+                                    lock (cpListLock) { cpList.Add(lp); }
                             }
                         }
 
@@ -2374,15 +2379,78 @@ namespace LiteNexLauncher
                                     {
                                         string np = Path.Combine(librariesDir, na["path"].ToString().Replace('/', Path.DirectorySeparatorChar));
                                         EnsureDir(Path.GetDirectoryName(np));
-                                        if (!File.Exists(np) || new FileInfo(np).Length < 100) { try { wc.DownloadFile(na["url"].ToString(), np); downloaded++; } catch {} }
-                                        if (File.Exists(np)) ExtractNatives(np, nativesDir);
+                                        if (!File.Exists(np) || new FileInfo(np).Length < 100)
+                                            missingLibs.Add(Tuple.Create(na["url"].ToString(), np, true));
+                                        else
+                                            nativePaths.Add(np);
                                     }
                                 }
                             }
                         }
                     }
-                    if (downloaded > 0) Log("[LIBRARY] " + downloaded + " yeni kütüphane indirildi.", ThemeManager.C_EMERALD);
-                    else Log("[LIBRARY] Tüm kütüphaneler hazır. ✓", ThemeManager.C_EMERALD);
+
+                    if (missingLibs.Count == 0)
+                    {
+                        Log("[LIBRARY] Tüm kütüphaneler hazır. ✓", ThemeManager.C_EMERALD);
+                    }
+                    else
+                    {
+                        const int LIB_THREADS = 24;
+                        int libCompleted  = 0;
+                        int libTotal      = missingLibs.Count;
+                        long libStartTick = DateTime.Now.Ticks;
+                        Log("[LIBRARY] " + libTotal + " kütüphane eksik — " + LIB_THREADS + " paralel thread ile indiriliyor...", Color.Yellow);
+
+                        CountdownEvent libCountdown = new CountdownEvent(libTotal);
+                        SemaphoreSlim  libSem       = new SemaphoreSlim(LIB_THREADS, LIB_THREADS);
+
+                        foreach (var libItem in missingLibs)
+                        {
+                            var localLib = libItem;
+                            ThreadPool.QueueUserWorkItem((_) =>
+                            {
+                                libSem.Wait();
+                                try
+                                {
+                                    if (!File.Exists(localLib.Item2))
+                                    {
+                                        using (WebClient dlWc = new WebClient())
+                                        {
+                                            dlWc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) LiteNex/6.0");
+                                            dlWc.DownloadFile(localLib.Item1, localLib.Item2);
+                                        }
+                                    }
+                                    if (File.Exists(localLib.Item2))
+                                    {
+                                        if (localLib.Item3) { lock (cpListLock) { nativePaths.Add(localLib.Item2); } }
+                                        else                { lock (cpListLock) { cpList.Add(localLib.Item2); } }
+                                    }
+
+                                    int c = Interlocked.Increment(ref libCompleted);
+                                    if (c % 10 == 0 || c == libTotal)
+                                    {
+                                        double elapsed = Math.Max(0.1, (DateTime.Now.Ticks - libStartTick) / 10000000.0);
+                                        double speed   = c / elapsed;
+                                        int    eta     = speed > 0 ? (int)Math.Round((libTotal - c) / speed) : 0;
+                                        int    pct     = 30 + (int)(25.0 * c / libTotal);
+                                        SetProgress(pct, "Kütüphaneler: " + c + "/" + libTotal + "  ·  " + Math.Round(speed) + " dosya/s  ·  ~" + eta + "s kaldı");
+                                    }
+                                }
+                                catch { }
+                                finally { libSem.Release(); libCountdown.Signal(); }
+                            });
+                        }
+
+                        libCountdown.Wait();
+                        double libSec = (DateTime.Now.Ticks - libStartTick) / 10000000.0;
+                        Log("[LIBRARY] " + libCompleted + " kütüphane " + Math.Round(libSec, 1) + "s'de indirildi. ✓", ThemeManager.C_EMERALD);
+                    }
+
+                    // Natives çıkar (paralel indirme sonrası)
+                    foreach (string np in nativePaths) { try { ExtractNatives(np, nativesDir); } catch {} }
+
+                    // Mevcut olan ama cpList'e eklenmemiş artifact'ları tara
+                    ScanLocalLibraries(librariesDir, null, cpList);
                 }
 
                 SetProgress(60, "Assetler indiriliyor...");
@@ -2559,8 +2627,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 651;
-        public const string CURRENT_VERSION_NAME = "6.5.1";
+        public const int CURRENT_VERSION_CODE = 652;
+        public const string CURRENT_VERSION_NAME = "6.5.2";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
@@ -2925,6 +2993,7 @@ namespace LiteNexLauncher
                 }
 
                 try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072|(SecurityProtocolType)768|SecurityProtocolType.Tls; } catch {}
+                try { ServicePointManager.DefaultConnectionLimit = 64; } catch {} // Paralel indirme için bağlantı limiti artırıldı
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 
