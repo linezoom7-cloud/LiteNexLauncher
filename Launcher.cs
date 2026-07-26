@@ -22,8 +22,8 @@ using System.Windows.Forms;
 [assembly: AssemblyProduct("LiteNex Client")]
 [assembly: AssemblyCopyright("Copyright © 2026 LiteNex Studios")]
 [assembly: AssemblyTrademark("LiteNex")]
-[assembly: AssemblyVersion("6.7.5.0")]
-[assembly: AssemblyFileVersion("6.7.5.0")]
+[assembly: AssemblyVersion("6.7.7.0")]
+[assembly: AssemblyFileVersion("6.7.7.0")]
 [assembly: Guid("8f3954ce-c84a-4d2c-8cb9-bc22394fae6f")]
 
 namespace LiteNexLauncher
@@ -402,6 +402,13 @@ namespace LiteNexLauncher
         private int _fpsVal = 240;
         private Random _rnd = new Random();
 
+        // Dinamik HUD Değişkenleri
+        private int _helmetDur = 92, _chestDur = 84, _legsDur = 79, _bootsDur = 62;
+        private int _potionSecSpeed = 105, _potionSecStrength = 30;
+        private int _frameCount = 0;
+        private long _lastFpsMs = 0;
+        private int _actualFps = 240;
+
         // Tuş durumları
         private bool _w = false, _a = false, _s = false, _d = false, _space = false;
         private bool _lmb = false, _rmb = false;
@@ -466,8 +473,30 @@ namespace LiteNexLauncher
                 _lmbCps = _lmbTicks.Count;
                 _rmbCps = _rmbTicks.Count;
 
-                if (_rnd.Next(20) == 0) _fpsVal = _rnd.Next(220, 290);
+                // FPS & Potion & Armor güncellemeleri (saniyede bir)
+                _frameCount++;
+                long nowMs = now / 10000;
+                if (_lastFpsMs == 0) _lastFpsMs = nowMs;
+                if (nowMs - _lastFpsMs >= 1000)
+                {
+                    _actualFps = (int)(_frameCount * 1000.0 / (nowMs - _lastFpsMs));
+                    if (_actualFps < 30 || _actualFps > 1000) _actualFps = _rnd.Next(240, 290);
+                    _frameCount = 0;
+                    _lastFpsMs = nowMs;
 
+                    if (_potionSecSpeed > 0) _potionSecSpeed--; else _potionSecSpeed = 105;
+                    if (_potionSecStrength > 0) _potionSecStrength--; else _potionSecStrength = 30;
+
+                    if (_rnd.Next(15) == 0)
+                    {
+                        if (_helmetDur > 20) _helmetDur--; else _helmetDur = 99;
+                        if (_chestDur > 20) _chestDur--; else _chestDur = 99;
+                        if (_legsDur > 20) _legsDur--; else _legsDur = 99;
+                        if (_bootsDur > 20) _bootsDur--; else _bootsDur = 99;
+                    }
+                }
+
+                _fpsVal = _actualFps;
                 this.Invalidate();
             };
             _fpsTimer.Start();
@@ -524,7 +553,21 @@ namespace LiteNexLauncher
                 }
             }
 
-            // 2. KEYSTROKES (Sağ Alt veya Sol Alt)
+            // 2. TOGGLE SPRINT
+            if (_main.pvpToggleSprintEnabled)
+            {
+                using (Font font = new Font("Segoe UI", 9F, FontStyle.Bold))
+                {
+                    string txt = "[🏃 Sprint: Aktif]";
+                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(150, 15, 13, 28)))
+                        g.FillRectangle(sb, w - 180, 82, 160, 24);
+                    using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
+                        g.DrawRectangle(p, w - 180, 82, 160, 24);
+                    g.DrawString(txt, font, Brushes.Cyan, new RectangleF(w - 180, 82, 160, 24), new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                }
+            }
+
+            // 3. KEYSTROKES (Sol Alt)
             if (_main.pvpKeystrokesEnabled)
             {
                 int ksX = 30;
@@ -539,7 +582,7 @@ namespace LiteNexLauncher
                 DrawKeyBox(g, "───────────", ksX, ksY + 76, 110, 20, _space);
             }
 
-            // 3. ARMOR & ITEM DURABILITY
+            // 4. ARMOR & ITEM DURABILITY (Sağ Alt)
             if (_main.pvpArmorStatusEnabled)
             {
                 int armX = w - 180;
@@ -552,29 +595,73 @@ namespace LiteNexLauncher
                     using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
                         g.DrawRectangle(p, armX, armY, 160, 94);
 
-                    g.DrawString("🛡️ Kask: %92", font, Brushes.White, armX + 10, armY + 8);
-                    g.DrawString("👕 Zırh: %84", font, Brushes.White, armX + 10, armY + 28);
-                    g.DrawString("👖 Pantolon: %79", font, Brushes.White, armX + 10, armY + 48);
-                    g.DrawString("👟 Bot: %62", font, Brushes.White, armX + 10, armY + 68);
+                    g.DrawString(string.Format("🛡️ Kask: %{0}", _helmetDur), font, Brushes.White, armX + 10, armY + 8);
+                    g.DrawString(string.Format("👕 Zırh: %{0}", _chestDur), font, Brushes.White, armX + 10, armY + 28);
+                    g.DrawString(string.Format("👖 Pantolon: %{0}", _legsDur), font, Brushes.White, armX + 10, armY + 48);
+                    g.DrawString(string.Format("👟 Bot: %{0}", _bootsDur), font, Brushes.White, armX + 10, armY + 68);
                 }
             }
 
-            // 4. COMPASS DIRECTION HUD
+            // 5. COMPASS DIRECTION HUD (Sol Üst)
             if (_main.pvpCompassEnabled)
             {
                 using (Font font = new Font("Segoe UI", 10F, FontStyle.Bold))
                 {
                     string dir = "N (Kuzey)";
                     if (_w && _d) dir = "NE (Kuzeydoğu)";
+                    else if (_w && _a) dir = "NW (Kuzeybatı)";
+                    else if (_s && _d) dir = "SE (Güneydoğu)";
                     else if (_s && _a) dir = "SW (Güneybatı)";
+                    else if (_w) dir = "N (Kuzey)";
+                    else if (_s) dir = "S (Güney)";
+                    else if (_a) dir = "W (Batı)";
+                    else if (_d) dir = "E (Doğu)";
                     g.DrawString("🧭 Yön: " + dir, font, Brushes.LimeGreen, 30, 50);
                 }
             }
 
-            // 5. FPS VE PING
+            // 6. FPS VE PING
             using (Font f = new Font("Segoe UI", 9.5F, FontStyle.Bold))
             {
                 g.DrawString("FPS: " + _fpsVal + " | Ping: 12ms", f, Brushes.Cyan, 30, 80);
+            }
+
+            // 7. POTION EFFECTS OVERLAY (Sol Üst, FPS'in Altı)
+            if (_main.pvpPotionHudEnabled)
+            {
+                int potY = 110;
+                using (Font font = new Font("Segoe UI", 8.5F, FontStyle.Bold))
+                {
+                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(140, 15, 13, 28)))
+                    {
+                        int minSpeed = _potionSecSpeed / 60;
+                        int secSpeed = _potionSecSpeed % 60;
+                        g.FillRectangle(sb, 30, potY, 140, 24);
+                        using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
+                            g.DrawRectangle(p, 30, potY, 140, 24);
+                        g.DrawString(string.Format("⚡ Hız II ({0}:{1:D2})", minSpeed, secSpeed), font, Brushes.Yellow, 34, potY + 4);
+
+                        int minStr = _potionSecStrength / 60;
+                        int secStr = _potionSecStrength % 60;
+                        g.FillRectangle(sb, 30, potY + 28, 140, 24);
+                        using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
+                            g.DrawRectangle(p, 30, potY + 28, 140, 24);
+                        g.DrawString(string.Format("💪 Güç I ({0}:{1:D2})", minStr, secStr), font, Brushes.OrangeRed, 34, potY + 32);
+                    }
+                }
+            }
+
+            // 8. CUSTOM CROSSHAIR
+            if (_main.pvpCrosshairEnabled)
+            {
+                int cx = w / 2;
+                int cy = h / 2;
+                using (Pen p = new Pen(Color.Cyan, 2f))
+                {
+                    g.DrawLine(p, cx - 8, cy, cx + 8, cy);
+                    g.DrawLine(p, cx, cy - 8, cx, cy + 8);
+                    g.FillEllipse(Brushes.White, cx - 2, cy - 2, 4, 4);
+                }
             }
         }
 
@@ -3195,8 +3282,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 676;
-        public const string CURRENT_VERSION_NAME = "6.7.6";
+        public const int CURRENT_VERSION_CODE = 677;
+        public const string CURRENT_VERSION_NAME = "6.7.7";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {

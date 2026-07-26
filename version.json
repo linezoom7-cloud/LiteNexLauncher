@@ -1,8 +1,8 @@
 {
-  "version": "6.7.6",
-  "versionCode": 676,
+  "version": "6.7.7",
+  "versionCode": 677,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \ud83d\udee1\ufe0f Geli\u015fmi\u015f Windows 10/11 app.manifest entegrasyonu ile Defender g\u00fcvenlik uyar\u0131lar\u0131 tamamen engellendi",
+  "changelog": "• 📊 PvP Modları düzeltildi, tüm göstergeler aktif ve dinamik hale getirildi\n• 🛡️ Güvenlik taraması ve Windows Defender yanlış pozitif uyarıları giderildi",
   "mandatory": false
 }
