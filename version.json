@@ -1,8 +1,8 @@
 {
-  "version": "6.5.5",
-  "versionCode": 655,
+  "version": "6.5.6",
+  "versionCode": 656,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \ud83d\uddd1\ufe0f Gereksiz Fabric ve PvP mod paketi kurma butonlari temizlendi\n\u2022 \ud83d\udcfa Launcher kaydirma performansi arttirildi",
+  "changelog": "\u2022 \u2615 Eski Minecraft s\u00fcr\u00fcmleri i\u00e7in Java 8 otomatik se\u00e7im deste\u011fi (ClassCastException hatasi giderildi)",
   "mandatory": false
 }

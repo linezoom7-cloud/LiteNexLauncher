@@ -2425,6 +2425,23 @@ namespace LiteNexLauncher
                         int.TryParse(jv["majorVersion"].ToString(), out reqJavaVer);
                     }
                 }
+                else
+                {
+                    // javaVersion bilgisi yoksa: Sürüm ismine göre akıllı karar ver
+                    // Örneğin "1.0", "1.8.9", "1.12.2", "1.16.5" gibi eski sürümler Java 8 gerektirir.
+                    if (!string.IsNullOrEmpty(ver))
+                    {
+                        if (ver.StartsWith("1.") && 
+                            !ver.StartsWith("1.17") && 
+                            !ver.StartsWith("1.18") && 
+                            !ver.StartsWith("1.19") && 
+                            !ver.StartsWith("1.20") && 
+                            !ver.StartsWith("1.21"))
+                        {
+                            reqJavaVer = 8;
+                        }
+                    }
+                }
 
                 string assetIndexUrl = null;
                 if (detailDict.ContainsKey("assetIndex"))
@@ -2779,8 +2796,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 655;
-        public const string CURRENT_VERSION_NAME = "6.5.5";
+        public const int CURRENT_VERSION_CODE = 656;
+        public const string CURRENT_VERSION_NAME = "6.5.6";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
