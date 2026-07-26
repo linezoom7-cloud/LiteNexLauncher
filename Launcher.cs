@@ -423,7 +423,7 @@ namespace LiteNexLauncher
         // ══════════════════════════════════════════════════════════════════════
         private void InitializeComponent()
         {
-            this.Text             = "LiteNex Client v6.0 Ultimate Edition";
+            this.Text             = "LiteNex Client v" + CURRENT_VERSION_NAME + " Ultimate Edition";
             this.Size             = new Size(1260, 820);
             this.MinimumSize      = new Size(1040, 700);
             this.StartPosition    = FormStartPosition.CenterScreen;
@@ -1215,7 +1215,7 @@ namespace LiteNexLauncher
             SetNavActive(btnNavPlay);
             UpdatePlayerAvatar("LitePlayer");
             LoadConfigFromDisk();
-            Log("[SYS] LiteNex Client v6.4 Ultimate Edition Hazır.", ThemeManager.C_CYAN);
+            Log("[SYS] LiteNex Client v" + CURRENT_VERSION_NAME + " Ultimate Edition Hazır.", ThemeManager.C_CYAN);
         }
 
         // ══════════════════════════════════════════════════════════════════════
@@ -2559,8 +2559,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 640;
-        public const string CURRENT_VERSION_NAME = "6.4.0";
+        public const int CURRENT_VERSION_CODE = 650;
+        public const string CURRENT_VERSION_NAME = "6.5.0";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
