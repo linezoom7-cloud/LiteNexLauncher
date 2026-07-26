@@ -1,8 +1,8 @@
 {
-  "version": "6.5.4",
-  "versionCode": 654,
+  "version": "6.5.5",
+  "versionCode": 655,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \ud83d\udcfa Launcher kaydirma ve donma sorunu giderildi (DoubleBuffered + Solid Color Render)\n\u2022 \ud83c\udfae RSHIFT oyun i\u00e7i PvP men\u00fcs\u00fc (Global Keyboard Hook)",
+  "changelog": "\u2022 \ud83d\uddd1\ufe0f Gereksiz Fabric ve PvP mod paketi kurma butonlari temizlendi\n\u2022 \ud83d\udcfa Launcher kaydirma performansi arttirildi",
   "mandatory": false
 }

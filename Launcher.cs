@@ -1043,42 +1043,7 @@ namespace LiteNexLauncher
             versionsCard.Controls.Add(btnFolderGame); versionsCard.Controls.Add(btnFolderMods);
             versionsCard.Controls.Add(btnFolderPacks); versionsCard.Controls.Add(btnFolderSaves); versionsCard.Controls.Add(btnFolderShots);
 
-            // Fabric / Forge 1-Click Installer Presets
-            Button btnInstallFabric = new Button { Text = "⚡ 1-Tık Fabric Loader Kur (1.20.4)", Location = new Point(24, 114), Size = new Size(260, 36), FlatStyle = FlatStyle.Flat, BackColor = ThemeManager.C_PURPLE, ForeColor = Color.White, Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnInstallFabric.FlatAppearance.BorderSize = 0;
-            btnInstallFabric.Click += (s, e) =>
-            {
-                SoundSystem.PlayClick();
-                btnInstallFabric.Enabled = false; btnInstallFabric.Text = "⏳ Kuruluyor...";
-                ThreadPool.QueueUserWorkItem((_) =>
-                {
-                    try
-                    {
-                        string fTarget = Path.Combine(versionsDir, "Fabric-1.20.4");
-                        EnsureDir(fTarget);
-                        using (WebClient wc = new WebClient())
-                        {
-                            wc.Headers.Add("User-Agent", "LiteNex/6.0");
-                            string json = wc.DownloadString("https://meta.fabricmc.net/v2/versions/loader/1.20.4/0.15.7/profile/json");
-                            File.WriteAllText(Path.Combine(fTarget, "Fabric-1.20.4.json"), json);
-                        }
-                        this.Invoke(new Action(() =>
-                        {
-                            btnInstallFabric.Text = "✓ Fabric 1.20.4 Kuruldu!";
-                            btnInstallFabric.BackColor = ThemeManager.C_EMERALD;
-                            if (!cbVersions.Items.Contains("Fabric-1.20.4")) cbVersions.Items.Insert(0, "Fabric-1.20.4");
-                            cbVersions.SelectedIndex = 0;
-                            Log("[FABRIC] Fabric Loader 1.20.4 kuruldu!", ThemeManager.C_EMERALD);
-                        }));
-                    }
-                    catch (Exception ex)
-                    {
-                        this.Invoke(new Action(() => { btnInstallFabric.Enabled = true; btnInstallFabric.Text = "Tekrar"; Log("[HATA] " + ex.Message, Color.Red); }));
-                    }
-                });
-            };
-
-            versionsCard.Controls.Add(btnInstallFabric);
+            // Fabric / Forge 1-Click Installer Presets (Removed)
 
             // Modrinth 1-Click Mod Presets Section
             Label lblModPresetH = new Label { Text = "POPÜLER FPS & KOLAYLIK MODLARI (MODRINTH INTEGRATED)", Location = new Point(24, 160), AutoSize = true, Font = new Font("Segoe UI", 8F, FontStyle.Bold), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
@@ -1335,26 +1300,7 @@ namespace LiteNexLauncher
             AddPvpModInfoRow("🎯   Custom Crosshair Mod", "Oyun İçi RSHIFT ⌨️");
             AddPvpModInfoRow("⚡   Toggle Sprint & Zoomify", "Oyun İçi RSHIFT ⌨️");
 
-            Button btnInstallPvpPack = new Button
-            {
-                Text = "🚀  1-Tık Sodium + PvP ModPack İndir & Kur",
-                Location = new Point(20, 675),
-                Size = new Size(420, 46),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = ThemeManager.C_PURPLE,
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnInstallPvpPack.FlatAppearance.BorderSize = 0;
-            btnInstallPvpPack.Click += (s, e) =>
-            {
-                SoundSystem.PlayClick();
-                MessageBox.Show("LiteNex Sodium + PvP ModPaketi %AppData%\\.litenex\\mods klasörünüze entegre edildi!\n\nOyuna girdiğinizde Right Shift (Sağ Shift) tuşuna basarak PvP Client menüsünü açabilirsiniz.", "LiteNex PvP Suite");
-            };
-
             pvpLeftCard.Controls.Add(lblPvpTitle); pvpLeftCard.Controls.Add(lblPvpSub);
-            pvpLeftCard.Controls.Add(btnInstallPvpPack);
             pvpModsPanel.Controls.Add(pvpLeftCard);
 
             // Right Panel (Live HUD Simulator / Preview Box)
@@ -2833,8 +2779,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 654;
-        public const string CURRENT_VERSION_NAME = "6.5.4";
+        public const int CURRENT_VERSION_CODE = 655;
+        public const string CURRENT_VERSION_NAME = "6.5.5";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
