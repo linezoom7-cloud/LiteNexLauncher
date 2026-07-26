@@ -1,8 +1,8 @@
 {
-  "version": "6.5.3",
-  "versionCode": 653,
+  "version": "6.5.4",
+  "versionCode": 654,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "• 🎮 RSHIFT oyun içi PvP menüsü gerçekleştirildi (Global Keyboard Hook)\n• 📺 Scroll/repaint titreme düzeltildi (DoubleBuffered Panel)\n• ⚡ MC indirme hızı arttirildi (24 paralel thread)\n• 🔒 Çift açilma engeli (Global Mutex)",
+  "changelog": "\u2022 \ud83d\udcfa Launcher kaydirma ve donma sorunu giderildi (DoubleBuffered + Solid Color Render)\n\u2022 \ud83c\udfae RSHIFT oyun i\u00e7i PvP men\u00fcs\u00fc (Global Keyboard Hook)",
   "mandatory": false
 }

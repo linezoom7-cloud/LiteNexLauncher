@@ -1018,7 +1018,7 @@ namespace LiteNexLauncher
             // ══════════════════════════════════════════════════════════════════
             versionsPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Visible = false };
 
-            Panel versionsCard = new Panel { Location = new Point(24, 16), Size = new Size(966, 744), BackColor = ThemeManager.C_CARD };
+            DBPanel versionsCard = new DBPanel { Location = new Point(24, 16), Size = new Size(966, 744), BackColor = ThemeManager.C_CARD };
             versionsCard.Paint += (s, e) =>
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
@@ -1082,7 +1082,7 @@ namespace LiteNexLauncher
 
             // Modrinth 1-Click Mod Presets Section
             Label lblModPresetH = new Label { Text = "POPÜLER FPS & KOLAYLIK MODLARI (MODRINTH INTEGRATED)", Location = new Point(24, 160), AutoSize = true, Font = new Font("Segoe UI", 8F, FontStyle.Bold), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
-            flowModsList = new FlowLayoutPanel { Location = new Point(24, 178), Size = new Size(916, 76), AutoScroll = false, BackColor = Color.Transparent };
+            flowModsList = new FlowLayoutPanel { Location = new Point(24, 178), Size = new Size(916, 76), AutoScroll = false, BackColor = ThemeManager.C_CARD };
 
             AddModPresetCard("🚀 Sodium", "Fabric FPS Booster", "sodium");
             AddModPresetCard("🌈 Iris Shaders", "Shader Desteği", "iris");
@@ -1094,7 +1094,7 @@ namespace LiteNexLauncher
 
             // World Save Manager Section
             Label lblSavesH = new Label { Text = "KAYITLI DÜNYALAR (SAVES) & ZIP YEDEKLEME", Location = new Point(24, 262), AutoSize = true, Font = new Font("Segoe UI", 8F, FontStyle.Bold), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
-            flowSavesList = new FlowLayoutPanel { Location = new Point(24, 280), Size = new Size(916, 110), AutoScroll = true, BackColor = Color.Transparent };
+            flowSavesList = new FlowLayoutPanel { Location = new Point(24, 280), Size = new Size(916, 110), AutoScroll = true, BackColor = ThemeManager.C_CARD };
 
             versionsCard.Controls.Add(lblSavesH);
             versionsCard.Controls.Add(flowSavesList);
@@ -1103,7 +1103,7 @@ namespace LiteNexLauncher
             txtSearchVer = new TextBox { Location = new Point(24, 418), Size = new Size(916, 32), BackColor = Color.FromArgb(16, 14, 32), ForeColor = ThemeManager.C_TEXT, BorderStyle = BorderStyle.FixedSingle, Font = new Font("Segoe UI", 10F) };
 
             txtSearchVer.TextChanged += (s, e) => PopulateVersionsFlow();
-            flowVersionsList = new FlowLayoutPanel { Location = new Point(24, 456), Size = new Size(916, 268), AutoScroll = true, BackColor = Color.Transparent };
+            flowVersionsList = new FlowLayoutPanel { Location = new Point(24, 456), Size = new Size(916, 268), AutoScroll = true, BackColor = ThemeManager.C_CARD };
 
             versionsCard.Controls.Add(lblSearchH);
             versionsCard.Controls.Add(txtSearchVer);
@@ -1152,7 +1152,7 @@ namespace LiteNexLauncher
                 Log("[SUNUCU] '" + sName + "' (" + sIp + ") kaydedildi.", ThemeManager.C_EMERALD);
             };
 
-            flowServersList = new FlowLayoutPanel { Location = new Point(24, 166), Size = new Size(916, 546), AutoScroll = true, BackColor = Color.Transparent };
+            flowServersList = new FlowLayoutPanel { Location = new Point(24, 166), Size = new Size(916, 546), AutoScroll = true, BackColor = ThemeManager.C_CARD };
 
             serversCard.Controls.Add(lblServTitle); serversCard.Controls.Add(lblServSub);
             serversCard.Controls.Add(lblSnH); serversCard.Controls.Add(txtCustomServerName);
@@ -2833,8 +2833,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 653;
-        public const string CURRENT_VERSION_NAME = "6.5.3";
+        public const int CURRENT_VERSION_CODE = 654;
+        public const string CURRENT_VERSION_NAME = "6.5.4";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
