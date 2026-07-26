@@ -1,8 +1,8 @@
 {
-  "version": "6.6.1",
-  "versionCode": 661,
+  "version": "6.6.3",
+  "versionCode": 663,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \ud83d\udcdd Navigasyon butonlarindaki çift yazi render sorunu tamamen giderildi\n\u2022 \u26a1 Geli\u015ftirilmi\u015f Lunar stili neon aray\u00fcz entegre edildi",
+  "changelog": "\u2022 \u2728 Lunar Client tarzi premium mor-turkuaz gradient OYUNA BA\u015eLA butonu tasarlandi\n\u2022 \ud83d\udd06 Kart kenarliklari canli neon parildayan gradientlerle yenilendi\n\u2022 \ud83d\udd12 \u00c7ift a\u00e7ilma engeli ve anlik g\u00fcncelleme deste\u011fi entegre",
   "mandatory": false
 }

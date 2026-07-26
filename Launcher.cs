@@ -881,12 +881,13 @@ namespace LiteNexLauncher
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 using (GraphicsPath path = GetRoundedPath(new Rectangle(0, 0, heroCard.Width - 1, heroCard.Height - 1), 12))
                 {
-                    using (LinearGradientBrush bg = new LinearGradientBrush(heroCard.ClientRectangle, Color.FromArgb(30, 20, 62), Color.FromArgb(14, 12, 32), LinearGradientMode.ForwardDiagonal))
+                    using (LinearGradientBrush bg = new LinearGradientBrush(heroCard.ClientRectangle, Color.FromArgb(20, 14, 40), Color.FromArgb(10, 8, 22), LinearGradientMode.ForwardDiagonal))
                         e.Graphics.FillPath(bg, path);
-                    using (Pen p = new Pen(ThemeManager.C_BORDER)) e.Graphics.DrawPath(p, path);
+                    // Glowing Neon Border
+                    using (LinearGradientBrush pLg = new LinearGradientBrush(heroCard.ClientRectangle, ThemeManager.C_PURPLE, ThemeManager.C_CYAN, LinearGradientMode.Horizontal))
+                    using (Pen p = new Pen(pLg, 1.5f))
+                        e.Graphics.DrawPath(p, path);
                 }
-                using (LinearGradientBrush tl = new LinearGradientBrush(new Rectangle(12, 0, heroCard.Width - 24, 3), ThemeManager.C_PURPLE, ThemeManager.C_CYAN, LinearGradientMode.Horizontal))
-                    e.Graphics.FillRectangle(tl, 12, 0, heroCard.Width - 24, 3);
             };
 
             Label heroBadge = new Label { Text = "  ⚡  ULTRA HIGH PERFORMANCE  ·  C# NATIVE MOTORU  ", Location = new Point(24, 24), AutoSize = true, Font = new Font("Segoe UI", 8F, FontStyle.Bold), ForeColor = ThemeManager.C_PURPLE_L, BackColor = Color.Transparent };
@@ -894,7 +895,7 @@ namespace LiteNexLauncher
             Label heroSub   = new Label { Text = "LiteNex ile Minecraft'ın tüm sürümlerini yüksek FPS, sıfır gecikme ve ücretsiz oyna.", Location = new Point(26, 112), AutoSize = true, Font = new Font("Segoe UI", 10F), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
 
             Label lblProf = new Label { Text = "KAYITLI PROFİL", Location = new Point(24, 154), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
-            cbProfiles = new ComboBox { Location = new Point(24, 172), Size = new Size(160, 32), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(16, 14, 32), ForeColor = ThemeManager.C_TEXT, Font = new Font("Segoe UI", 10F) };
+            cbProfiles = new ComboBox { Location = new Point(24, 172), Size = new Size(160, 32), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(12, 10, 24), ForeColor = ThemeManager.C_TEXT, Font = new Font("Segoe UI", 10F) };
             foreach (var p in savedProfiles) cbProfiles.Items.Add(p);
             if (cbProfiles.Items.Count > 0) cbProfiles.SelectedIndex = 0;
 
@@ -933,7 +934,7 @@ namespace LiteNexLauncher
             };
 
             Label lblUH = new Label { Text = "OYUNCU ADI", Location = new Point(266, 154), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
-            txtUsername = new TextBox { Location = new Point(266, 172), Size = new Size(160, 32), Text = cbProfiles.SelectedItem != null ? cbProfiles.SelectedItem.ToString() : "LitePlayer", BackColor = Color.FromArgb(16, 14, 32), ForeColor = ThemeManager.C_TEXT, BorderStyle = BorderStyle.FixedSingle, Font = new Font("Segoe UI", 10F) };
+            txtUsername = new TextBox { Location = new Point(266, 172), Size = new Size(160, 32), Text = cbProfiles.SelectedItem != null ? cbProfiles.SelectedItem.ToString() : "LitePlayer", BackColor = Color.FromArgb(12, 10, 24), ForeColor = ThemeManager.C_TEXT, BorderStyle = BorderStyle.FixedSingle, Font = new Font("Segoe UI", 10F) };
 
             txtUsername.TextChanged += (s, e) =>
             {
@@ -943,10 +944,10 @@ namespace LiteNexLauncher
             };
 
             Label lblVH = new Label { Text = "MINECRAFT SÜRÜMÜ", Location = new Point(436, 154), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
-            cbVersions = new ComboBox { Location = new Point(436, 172), Size = new Size(240, 32), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(16, 14, 32), ForeColor = ThemeManager.C_TEXT, Font = new Font("Segoe UI", 10F) };
+            cbVersions = new ComboBox { Location = new Point(436, 172), Size = new Size(240, 32), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(12, 10, 24), ForeColor = ThemeManager.C_TEXT, Font = new Font("Segoe UI", 10F) };
 
             Label lblCT = new Label { Text = "CLIENT TİPİ", Location = new Point(692, 154), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
-            cbClientType = new ComboBox { Location = new Point(692, 172), Size = new Size(248, 32), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(16, 14, 32), ForeColor = ThemeManager.C_TEXT, Font = new Font("Segoe UI", 10F) };
+            cbClientType = new ComboBox { Location = new Point(692, 172), Size = new Size(248, 32), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(12, 10, 24), ForeColor = ThemeManager.C_TEXT, Font = new Font("Segoe UI", 10F) };
             cbClientType.Items.Add("Vanilla (Orijinal)"); cbClientType.Items.Add("OptiFine (FPS Boost)"); cbClientType.Items.Add("Fabric Loader (Modlu)");
             cbClientType.SelectedIndex = 0;
 
@@ -954,31 +955,51 @@ namespace LiteNexLauncher
 
             btnPlay = new Button
             {
-                Text = "  ▶    OYUNA BAŞLA",
+                Text = "  ▶    OYUNA BAŞLA", // Keep default for initialization
                 Location = new Point(24, 240),
                 Size = new Size(916, 58),
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 14F, FontStyle.Bold),
-                ForeColor = Color.White,
-                BackColor = ThemeManager.C_PURPLE,
                 Cursor = Cursors.Hand,
             };
             btnPlay.FlatAppearance.BorderSize = 0;
+            
+            // Custom Gradient Paint for OYUNA BAŞLA (Play Button)
+            btnPlay.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (GraphicsPath path = GetRoundedPath(new Rectangle(0, 0, btnPlay.Width - 1, btnPlay.Height - 1), 8))
+                {
+                    bool isPlaying = (activeMcProcess != null && !activeMcProcess.HasExited);
+                    Color col1 = isPlaying ? Color.FromArgb(220, 38, 38) : ThemeManager.C_PURPLE;
+                    Color col2 = isPlaying ? Color.FromArgb(185, 28, 28) : ThemeManager.C_CYAN;
+                    
+                    if (btnPlay.Tag != null && btnPlay.Tag.ToString() == "hover")
+                    {
+                        col1 = Color.FromArgb(Math.Min(255, col1.R + 20), Math.Min(255, col1.G + 20), Math.Min(255, col1.B + 20));
+                        col2 = Color.FromArgb(Math.Min(255, col2.R + 20), Math.Min(255, col2.G + 20), Math.Min(255, col2.B + 20));
+                    }
+                    
+                    using (LinearGradientBrush lgb = new LinearGradientBrush(btnPlay.ClientRectangle, col1, col2, LinearGradientMode.Horizontal))
+                        e.Graphics.FillPath(lgb, path);
+                }
+                
+                // Dinamik olarak güncel buton yazısını çek (çakışmaları engellemek için)
+                string playText = string.IsNullOrEmpty(btnPlay.Text) ? "  ▶    OYUNA BAŞLA" : btnPlay.Text;
+                TextRenderer.DrawText(e.Graphics, playText, btnPlay.Font, new Rectangle(0, 0, btnPlay.Width, btnPlay.Height), Color.White, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+            };
+
             btnPlay.Click      += BtnPlay_Click;
             btnPlay.MouseEnter += (s, e) =>
             {
                 SoundSystem.PlayHover();
-                if (activeMcProcess != null && !activeMcProcess.HasExited)
-                    btnPlay.BackColor = Color.FromArgb(190, 18, 60);
-                else if (btnPlay.Enabled)
-                    btnPlay.BackColor = ThemeManager.C_PURPLE_D;
+                btnPlay.Tag = "hover";
+                btnPlay.Invalidate();
             };
             btnPlay.MouseLeave += (s, e) =>
             {
-                if (activeMcProcess != null && !activeMcProcess.HasExited)
-                    btnPlay.BackColor = Color.FromArgb(225, 29, 72);
-                else if (btnPlay.Enabled)
-                    btnPlay.BackColor = ThemeManager.C_PURPLE;
+                btnPlay.Tag = null;
+                btnPlay.Invalidate();
             };
 
 
@@ -2823,8 +2844,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 661;
-        public const string CURRENT_VERSION_NAME = "6.6.1";
+        public const int CURRENT_VERSION_CODE = 663;
+        public const string CURRENT_VERSION_NAME = "6.6.3";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
