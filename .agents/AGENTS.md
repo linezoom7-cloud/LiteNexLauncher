@@ -42,7 +42,7 @@ version.json'daki versionCode > Launcher.cs'deki CURRENT_VERSION_CODE oldugunda:
 Degisiklik turune gore:
 - Buyuk ozellik / yapisal degisiklik → X.Y.Z → X.(Y+1).0
 - Kucuk ozellik / iyilestirme → X.Y.Z → X.Y.(Z+1)
-- versionCode = major * 100 + minor * 10 + patch (ornek: 6.5.0 → 650)
+- versionCode = major * 100 + minor * 10 + patch (ornek: 6.5.1 → 651)
 
 ---
 

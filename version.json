@@ -1,8 +1,8 @@
 {
-  "version": "6.5.0",
-  "versionCode": 650,
+  "version": "6.5.1",
+  "versionCode": 651,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "• ⚔️ PvP Client Modları oyun içi Right Shift (RSHIFT) kısayol menüsüne taşındı\n• Oyun içi canlı HUD ve Mod yönetimi güncellendi",
+  "changelog": "• 🔒 Çift açılma engeli eklendi (Global Mutex)\n• ⚔️ PvP modları oyun içi Right Shift kısayoluna taşındı",
   "mandatory": false
 }

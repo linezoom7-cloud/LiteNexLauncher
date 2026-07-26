@@ -2559,8 +2559,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 650;
-        public const string CURRENT_VERSION_NAME = "6.5.0";
+        public const int CURRENT_VERSION_CODE = 651;
+        public const string CURRENT_VERSION_NAME = "6.5.1";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
