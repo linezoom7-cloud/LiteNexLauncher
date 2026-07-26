@@ -1,8 +1,8 @@
 {
-  "version": "6.7.0",
-  "versionCode": 670,
+  "version": "6.7.3",
+  "versionCode": 673,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \ud83c\udfae Ger\u00e7ek zamanli oyun \u00fcst\u00fc PvP HUD Overlay eklendi (CPS, Keystrokes, Armor Status, Compass, FPS)\n\u2022 \u26a1 RSHIFT men\u00fcs\u00fcnden anlik mod a\u00e7ma/kapatma deste\u011fi tamamlandi",
+  "changelog": "\u2022 \u26a1 Oyun i\u00e7i PvP HUD Overlay derleme ve koordinat senkronizasyon düzeltmeleri tamamlandi",
   "mandatory": false
 }

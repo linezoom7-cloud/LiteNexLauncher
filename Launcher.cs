@@ -366,11 +366,17 @@ namespace LiteNexLauncher
     // ══════════════════════════════════════════════════════════════════════════
     public class GameHudOverlayForm : Form
     {
-        [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+        [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
+        [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+        [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int vKey);
+        [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
         [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
 
         [StructLayout(LayoutKind.Sequential)]
         public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT { public int X; public int Y; }
 
         private MainForm _main;
         private IntPtr _mcHandle;
@@ -393,35 +399,47 @@ namespace LiteNexLauncher
             _main = main;
             _mcHandle = mcHandle;
 
+            // Ultra Akıcı Double Buffering Aktif Et
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+
             this.FormBorderStyle = FormBorderStyle.None;
             this.ShowInTaskbar   = false;
             this.TopMost         = true;
-            this.BackColor       = Color.Black;
-            this.TransparencyKey = Color.Black; // Siyah alanları şeffaf yap (click-through)
+            this.BackColor       = Color.Lime; // Lime rengini şeffaf yap (flicker önler)
+            this.TransparencyKey = Color.Lime;
             this.StartPosition   = FormStartPosition.Manual;
 
-            // Click-through (WS_EX_TRANSPARENT | WS_EX_NOACTIVATE)
+            // Click-through (WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_LAYERED)
             int initialStyle = GetWindowLong(this.Handle, -20);
             SetWindowLong(this.Handle, -20, initialStyle | 0x80000 | 0x20);
 
             // Takip zamanlayıcısı (Minecraft geometrisine yapışma)
-            _trackTimer = new System.Windows.Forms.Timer { Interval = 100 };
+            _trackTimer = new System.Windows.Forms.Timer { Interval = 50 };
             _trackTimer.Tick += (s, e) => UpdatePosition();
             _trackTimer.Start();
 
             // FPS ve Giriş takip zamanlayıcısı
-            _fpsTimer = new System.Windows.Forms.Timer { Interval = 50 };
+            _fpsTimer = new System.Windows.Forms.Timer { Interval = 30 };
             _fpsTimer.Tick += (s, e) =>
             {
-                // Girişleri oku
-                _w = (GetKeyState(0x57) & 0x8000) != 0; // W
-                _a = (GetKeyState(0x41) & 0x8000) != 0; // A
-                _s = (GetKeyState(0x53) & 0x8000) != 0; // S
-                _d = (GetKeyState(0x44) & 0x8000) != 0; // D
-                _space = (GetKeyState(0x20) & 0x8000) != 0; // Space
+                // Minecraft penceresi önde değilse tuşları okuma
+                IntPtr activeWnd = GetForegroundWindow();
+                if (activeWnd != _mcHandle)
+                {
+                    _w = _a = _s = _d = _space = _lmb = _rmb = false;
+                    this.Invalidate();
+                    return;
+                }
 
-                bool curLmb = (GetKeyState(0x01) & 0x8000) != 0;
-                bool curRmb = (GetKeyState(0x02) & 0x8000) != 0;
+                // Global Async Tuş Durumlarını oku (Sıfır gecikme)
+                _w = (GetAsyncKeyState(0x57) & 0x8000) != 0; // W
+                _a = (GetAsyncKeyState(0x41) & 0x8000) != 0; // A
+                _s = (GetAsyncKeyState(0x53) & 0x8000) != 0; // S
+                _d = (GetAsyncKeyState(0x44) & 0x8000) != 0; // D
+                _space = (GetAsyncKeyState(0x20) & 0x8000) != 0; // Space
+
+                bool curLmb = (GetAsyncKeyState(0x01) & 0x8000) != 0;
+                bool curRmb = (GetAsyncKeyState(0x02) & 0x8000) != 0;
 
                 long now = DateTime.Now.Ticks;
                 if (curLmb && !_lmb) { _lmbTicks.Enqueue(now); SoundSystem.PlayClick(); }
@@ -447,21 +465,23 @@ namespace LiteNexLauncher
         }
 
         [DllImport("user32.dll")] private static extern short GetKeyState(int vKey);
-        [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        [DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
         private void UpdatePosition()
         {
             try
             {
-                RECT rect;
-                if (GetWindowRect(_mcHandle, out rect))
+                RECT clientRect;
+                if (GetClientRect(_mcHandle, out clientRect))
                 {
-                    int w = rect.Right - rect.Left;
-                    int h = rect.Bottom - rect.Top;
-                    if (this.Location.X != rect.Left || this.Location.Y != rect.Top || this.Width != w || this.Height != h)
+                    POINT pt = new POINT { X = 0, Y = 0 };
+                    ClientToScreen(_mcHandle, ref pt);
+
+                    int w = clientRect.Right - clientRect.Left;
+                    int h = clientRect.Bottom - clientRect.Top;
+
+                    if (this.Location.X != pt.X || this.Location.Y != pt.Y || this.Width != w || this.Height != h)
                     {
-                        this.Location = new Point(rect.Left, rect.Top);
+                        this.Location = new Point(pt.X, pt.Y);
                         this.Size = new Size(w, h);
                     }
                 }
@@ -3163,8 +3183,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 670;
-        public const string CURRENT_VERSION_NAME = "6.7.0";
+        public const int CURRENT_VERSION_CODE = 673;
+        public const string CURRENT_VERSION_NAME = "6.7.3";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
