@@ -1,8 +1,8 @@
 {
-  "version": "6.7.3",
-  "versionCode": 673,
+  "version": "6.7.4",
+  "versionCode": 674,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \u26a1 Oyun i\u00e7i PvP HUD Overlay derleme ve koordinat senkronizasyon düzeltmeleri tamamlandi",
+  "changelog": "\u2022 \u26a1 Oyun içi PvP HUD verileri tamamen canli ve doğru verilere senkronize edildi (FPS, Yön, Dayaniklilik)",
   "mandatory": false
 }
