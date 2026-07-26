@@ -1,8 +1,8 @@
 {
-  "version": "6.5.8",
-  "versionCode": 658,
+  "version": "6.6.0",
+  "versionCode": 660,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \u2728 Lunar/Feather tarz\u0131 premium neon g\u00f6rsel tasarım g\u00fcncellemesi yapildi\n\u2022 \ud83d\udcfa Yan navigasyon men\u00fcs\u00fc canli neon indikat\u00f6rle yenilendi",
+  "changelog": "\u2022 \u26a1 GitHub CDN gecikmesini atlatmak i\u00e7in anlik Cache-Busting g\u00fcncellemesi uygulandi\n\u2022 \u2615 Java 8 fallback ve Lunar UI indikat\u00f6rleri tamamlandi",
   "mandatory": false
 }

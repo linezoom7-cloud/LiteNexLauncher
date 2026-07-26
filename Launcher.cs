@@ -2821,8 +2821,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 658;
-        public const string CURRENT_VERSION_NAME = "6.5.8";
+        public const int CURRENT_VERSION_CODE = 660;
+        public const string CURRENT_VERSION_NAME = "6.6.0";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
@@ -2833,7 +2833,8 @@ namespace LiteNexLauncher
                     using (WebClient wc = new WebClient())
                     {
                         wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) LiteNex/6.0");
-                        string json = wc.DownloadString(GITHUB_UPDATE_URL);
+                        string cacheBusterUrl = GITHUB_UPDATE_URL + "?t=" + DateTime.Now.Ticks;
+                        string json = wc.DownloadString(cacheBusterUrl);
                         JavaScriptSerializer jss = new JavaScriptSerializer();
                         var dict = jss.Deserialize<Dictionary<string, object>>(json);
                         if (dict != null && dict.ContainsKey("versionCode"))
@@ -3059,7 +3060,8 @@ namespace LiteNexLauncher
                     using (WebClient wc = new WebClient())
                     {
                         wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) LiteNex/6.0");
-                        string json = wc.DownloadString("https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json");
+                        string cacheBusterUrl = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json?t=" + DateTime.Now.Ticks;
+                        string json = wc.DownloadString(cacheBusterUrl);
                         JavaScriptSerializer jss = new JavaScriptSerializer();
                         var dict = jss.Deserialize<Dictionary<string, object>>(json);
 
