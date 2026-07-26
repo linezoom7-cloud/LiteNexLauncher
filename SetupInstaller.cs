@@ -10,14 +10,14 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 
 // ── ASSEMBLY METADATA (Windows Defender False Positive Azaltıcı) ──────────────
-[assembly: AssemblyTitle("LiteNex PvP Client Setup")]
+[assembly: AssemblyTitle("LiteNex Client Setup")]
 [assembly: AssemblyDescription("LiteNex Minecraft Client and Installer Bundle")]
 [assembly: AssemblyCompany("LiteNex Studios")]
 [assembly: AssemblyProduct("LiteNex Installer")]
 [assembly: AssemblyCopyright("Copyright © 2026 LiteNex Studios")]
 [assembly: AssemblyTrademark("LiteNex")]
-[assembly: AssemblyVersion("6.7.8.0")]
-[assembly: AssemblyFileVersion("6.7.8.0")]
+[assembly: AssemblyVersion("6.8.1.0")]
+[assembly: AssemblyFileVersion("6.8.1.0")]
 [assembly: Guid("8f3954ce-c84a-4d2c-8cb9-bc22394fae7a")]
 
 namespace LiteNexSetup
@@ -563,13 +563,9 @@ namespace LiteNexSetup
 
                     UpdateProgress(35, "LiteNex.exe motoru çıkartılıyor...");
                     string exePath = Path.Combine(targetDirectory, "LiteNex.exe");
-                    byte[] exeBytes = GetEmbeddedResourceBytes("LiteNex.bin");
+                    byte[] exeBytes = GetEmbeddedResourceBytes("LiteNex.exe");
                     if (exeBytes != null && exeBytes.Length > 0)
                     {
-                        for (int i = 0; i < exeBytes.Length; i++)
-                        {
-                            exeBytes[i] = (byte)(exeBytes[i] ^ 0x5A);
-                        }
                         File.WriteAllBytes(exePath, exeBytes);
                     }
                     else

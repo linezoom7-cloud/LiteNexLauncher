@@ -16,14 +16,14 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 // ── ASSEMBLY METADATA (Windows Defender False Positive Azaltıcı) ──────────────
-[assembly: AssemblyTitle("LiteNex PvP Client Launcher")]
-[assembly: AssemblyDescription("LiteNex Minecraft PvP Engine and Interactive HUD Client")]
+[assembly: AssemblyTitle("LiteNex Client Launcher")]
+[assembly: AssemblyDescription("LiteNex Minecraft Engine and Custom Client")]
 [assembly: AssemblyCompany("LiteNex Studios")]
 [assembly: AssemblyProduct("LiteNex Client")]
 [assembly: AssemblyCopyright("Copyright © 2026 LiteNex Studios")]
 [assembly: AssemblyTrademark("LiteNex")]
-[assembly: AssemblyVersion("6.7.8.0")]
-[assembly: AssemblyFileVersion("6.7.8.0")]
+[assembly: AssemblyVersion("6.8.1.0")]
+[assembly: AssemblyFileVersion("6.8.1.0")]
 [assembly: Guid("8f3954ce-c84a-4d2c-8cb9-bc22394fae6f")]
 
 namespace LiteNexLauncher
@@ -193,473 +193,7 @@ namespace LiteNexLauncher
     // ══════════════════════════════════════════════════════════════════════════
     // Global RSHIFT keyboard hook class removed to prevent Keylogger heuristic detections by antiviruses
 
-    // ══════════════════════════════════════════════════════════════════════════
-    //  PVP OVERLAY FORM
-    // ══════════════════════════════════════════════════════════════════════════
-    public class PvpOverlayForm : Form
-    {
-        private MainForm _main;
-        private Rectangle[] _hitboxes;
-
-        public PvpOverlayForm(MainForm main)
-        {
-            _main = main;
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.ShowInTaskbar   = false;
-            this.TopMost         = true;
-            this.BackColor       = Color.FromArgb(12, 8, 24);
-            this.Opacity         = 0.96;
-            this.Size            = new Size(520, 360);
-            this.StartPosition   = FormStartPosition.Manual;
-
-            Rectangle screen = Screen.PrimaryScreen.WorkingArea;
-            this.Location = new Point(screen.Right - this.Width - 24, screen.Bottom - this.Height - 24);
-
-            _hitboxes = new Rectangle[7];
-            int yStart = 62;
-            for (int i = 0; i < 7; i++)
-            {
-                _hitboxes[i] = new Rectangle(12, yStart + i * 42, this.Width - 24, 36);
-            }
-
-            this.Paint += (s, e) => DrawOverlay(e.Graphics);
-            this.MouseDown += OnOverlayClick;
-        }
-
-        private void OnOverlayClick(object sender, MouseEventArgs e)
-        {
-            for (int i = 0; i < _hitboxes.Length; i++)
-            {
-                if (_hitboxes[i].Contains(e.Location))
-                {
-                    SoundSystem.PlayClick();
-                    ToggleMod(i);
-                    this.Invalidate();
-                    break;
-                }
-            }
-        }
-
-        private void ToggleMod(int index)
-        {
-            if (_main == null) return;
-            switch (index)
-            {
-                case 0: _main.pvpCpsEnabled = !_main.pvpCpsEnabled; break;
-                case 1: _main.pvpKeystrokesEnabled = !_main.pvpKeystrokesEnabled; break;
-                case 2: _main.pvpArmorStatusEnabled = !_main.pvpArmorStatusEnabled; break;
-                case 3: _main.pvpPotionHudEnabled = !_main.pvpPotionHudEnabled; break;
-                case 4: _main.pvpCompassEnabled = !_main.pvpCompassEnabled; break;
-                case 5: _main.pvpCrosshairEnabled = !_main.pvpCrosshairEnabled; break;
-                case 6: _main.pvpToggleSprintEnabled = !_main.pvpToggleSprintEnabled; break;
-            }
-            _main.SavePvpConfigToDisk(); // Ayarları diske yaz (oyun anlık okur)
-        }
-
-        private void DrawOverlay(Graphics g)
-        {
-            int w = this.Width, h = this.Height;
-            g.SmoothingMode    = SmoothingMode.AntiAlias;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
-            using (var bg = new System.Drawing.Drawing2D.LinearGradientBrush(new Rectangle(0, 0, w, h), Color.FromArgb(18, 12, 38), Color.FromArgb(8, 5, 18), System.Drawing.Drawing2D.LinearGradientMode.Vertical))
-                g.FillRectangle(bg, 0, 0, w, h);
-
-            using (var border = new Pen(Color.FromArgb(139, 92, 246), 2))
-                g.DrawRectangle(border, 1, 1, w - 3, h - 3);
-
-            using (var bannerBrush = new SolidBrush(Color.FromArgb(180, 99, 52, 210)))
-                g.FillRectangle(bannerBrush, 0, 0, w, 48);
-            using (var bannerBorder = new Pen(Color.FromArgb(139, 92, 246), 1))
-                g.DrawLine(bannerBorder, 0, 48, w, 48);
-
-            using (var fTitle = new Font("Segoe UI", 12F, FontStyle.Bold))
-                g.DrawString("⚡ LiteNex PvP Client — Mod Menüsü", fTitle, Brushes.White, new RectangleF(14, 10, w - 28, 36), new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
-
-            using (var fHint = new Font("Segoe UI", 7.5F))
-                g.DrawString("RSHIFT veya Dışarı Tıkla Kapat", fHint, new SolidBrush(Color.FromArgb(148, 163, 184)), new RectangleF(w - 180, 18, 170, 18), new StringFormat { Alignment = StringAlignment.Far });
-
-            string[] mods = new string[]
-            {
-                "📊  CPS Counter HUD (LMB / RMB)",
-                "⌨️  Keystrokes Visualizer (WASD)",
-                "🛡️  Armor & Item Durability HUD",
-                "💊  Potion Effects Overlay",
-                "🧭  Compass Direction HUD",
-                "⊕  Custom Crosshair Mod",
-                "🏃  Toggle Sprint & Zoomify"
-            };
-
-            bool[] states = new bool[]
-            {
-                _main.pvpCpsEnabled,
-                _main.pvpKeystrokesEnabled,
-                _main.pvpArmorStatusEnabled,
-                _main.pvpPotionHudEnabled,
-                _main.pvpCompassEnabled,
-                _main.pvpCrosshairEnabled,
-                _main.pvpToggleSprintEnabled
-            };
-
-            int yStart = 62;
-            for (int i = 0; i < mods.Length; i++)
-            {
-                int rowY = yStart + i * 42;
-                bool isEnabled = states[i];
-
-                using (var rowBg = new SolidBrush(i % 2 == 0 ? Color.FromArgb(30, 139, 92, 246) : Color.FromArgb(15, 139, 92, 246)))
-                    g.FillRectangle(rowBg, 12, rowY, w - 24, 36);
-
-                Color accentCol = isEnabled ? ThemeManager.C_CYAN : ThemeManager.C_MUTED;
-                using (var accentPen = new Pen(accentCol, 3))
-                    g.DrawLine(accentPen, 12, rowY + 4, 12, rowY + 32);
-
-                using (var fMod = new Font("Segoe UI", 9.5F, FontStyle.Bold))
-                    g.DrawString(mods[i], fMod, Brushes.White, new RectangleF(24, rowY + 2, w - 120, 32), new StringFormat { LineAlignment = StringAlignment.Center });
-
-                // Durum Buton Metni
-                string statusText = isEnabled ? "✔ AKTİF" : "❌ KAPALI";
-                Color statusCol = isEnabled ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
-
-                using (var fStatus = new Font("Segoe UI", 8.5F, FontStyle.Bold))
-                    g.DrawString(statusText, fStatus, new SolidBrush(statusCol), new RectangleF(w - 110, rowY + 2, 98, 32), new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center });
-            }
-
-            // Alt yazı
-            using (var fBottom = new Font("Segoe UI", 7.5F))
-                g.DrawString("Değişiklikler anında oyuna yansır", fBottom, new SolidBrush(Color.FromArgb(100, 148, 163, 184)), new RectangleF(0, h - 22, w, 20), new StringFormat { Alignment = StringAlignment.Center });
-        }
-
-        protected override bool ShowWithoutActivation { get { return true; } }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    //  GAME HUD OVERLAY FORM — Minecraft üzerinde gerçek zamanlı çizim
-    // ══════════════════════════════════════════════════════════════════════════
-    public class GameHudOverlayForm : Form
-    {
-        [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
-        [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
-        [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int vKey);
-        [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        [DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-        [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
-        [StructLayout(LayoutKind.Sequential)]
-        public struct POINT { public int X; public int Y; }
-
-        private MainForm _main;
-        private IntPtr _mcHandle;
-        private System.Windows.Forms.Timer _trackTimer;
-        private System.Windows.Forms.Timer _fpsTimer;
-
-        // HUD verileri
-        private int _lmbCps = 0, _rmbCps = 0;
-        private Queue<long> _lmbTicks = new Queue<long>();
-        private Queue<long> _rmbTicks = new Queue<long>();
-        private int _fpsVal = 240;
-        private Random _rnd = new Random();
-
-        // Dinamik HUD Değişkenleri
-        private int _helmetDur = 92, _chestDur = 84, _legsDur = 79, _bootsDur = 62;
-        private int _potionSecSpeed = 105, _potionSecStrength = 30;
-        private int _frameCount = 0;
-        private long _lastFpsMs = 0;
-        private int _actualFps = 240;
-
-        // Tuş durumları
-        private bool _w = false, _a = false, _s = false, _d = false, _space = false;
-        private bool _lmb = false, _rmb = false;
-        private bool _rshift = false;
-
-        public GameHudOverlayForm(MainForm main, IntPtr mcHandle)
-        {
-            _main = main;
-            _mcHandle = mcHandle;
-
-            // Ultra Akıcı Double Buffering Aktif Et
-            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
-
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.ShowInTaskbar   = false;
-            this.TopMost         = true;
-            this.BackColor       = Color.Lime; // Lime rengini şeffaf yap (flicker önler)
-            this.TransparencyKey = Color.Lime;
-            this.StartPosition   = FormStartPosition.Manual;
-
-            // Click-through (WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_LAYERED)
-            int initialStyle = GetWindowLong(this.Handle, -20);
-            SetWindowLong(this.Handle, -20, initialStyle | 0x80000 | 0x20);
-
-            // Takip zamanlayıcısı (Minecraft geometrisine yapışma)
-            _trackTimer = new System.Windows.Forms.Timer { Interval = 50 };
-            _trackTimer.Tick += (s, e) => UpdatePosition();
-            _trackTimer.Start();
-
-            // FPS ve Giriş takip zamanlayıcısı
-            _fpsTimer = new System.Windows.Forms.Timer { Interval = 30 };
-            _fpsTimer.Tick += (s, e) =>
-            {
-                // Minecraft penceresi önde değilse tuşları okuma
-                IntPtr activeWnd = GetForegroundWindow();
-                if (activeWnd != _mcHandle)
-                {
-                    _w = _a = _s = _d = _space = _lmb = _rmb = false;
-                    this.Invalidate();
-                    return;
-                }
-
-                // Global Async Tuş Durumlarını oku (Sıfır gecikme)
-                _w = (GetAsyncKeyState(0x57) & 0x8000) != 0; // W
-                _a = (GetAsyncKeyState(0x41) & 0x8000) != 0; // A
-                _s = (GetAsyncKeyState(0x53) & 0x8000) != 0; // S
-                _d = (GetAsyncKeyState(0x44) & 0x8000) != 0; // D
-                _space = (GetAsyncKeyState(0x20) & 0x8000) != 0; // Space
-
-                bool curLmb = (GetAsyncKeyState(0x01) & 0x8000) != 0;
-                bool curRmb = (GetAsyncKeyState(0x02) & 0x8000) != 0;
-
-                long now = DateTime.Now.Ticks;
-                if (curLmb && !_lmb) { _lmbTicks.Enqueue(now); SoundSystem.PlayClick(); }
-                if (curRmb && !_rmb) { _rmbTicks.Enqueue(now); SoundSystem.PlayClick(); }
-
-                _lmb = curLmb; _rmb = curRmb;
-
-                // CPS Hesapla
-                long oneSecAgo = now - 10000000;
-                while (_lmbTicks.Count > 0 && _lmbTicks.Peek() < oneSecAgo) _lmbTicks.Dequeue();
-                while (_rmbTicks.Count > 0 && _rmbTicks.Peek() < oneSecAgo) _rmbTicks.Dequeue();
-                _lmbCps = _lmbTicks.Count;
-                _rmbCps = _rmbTicks.Count;
-
-                // FPS & Potion & Armor güncellemeleri (saniyede bir)
-                _frameCount++;
-                long nowMs = now / 10000;
-                if (_lastFpsMs == 0) _lastFpsMs = nowMs;
-                if (nowMs - _lastFpsMs >= 1000)
-                {
-                    _actualFps = (int)(_frameCount * 1000.0 / (nowMs - _lastFpsMs));
-                    if (_actualFps < 30 || _actualFps > 1000) _actualFps = _rnd.Next(240, 290);
-                    _frameCount = 0;
-                    _lastFpsMs = nowMs;
-
-                    if (_potionSecSpeed > 0) _potionSecSpeed--; else _potionSecSpeed = 105;
-                    if (_potionSecStrength > 0) _potionSecStrength--; else _potionSecStrength = 30;
-
-                    if (_rnd.Next(15) == 0)
-                    {
-                        if (_helmetDur > 20) _helmetDur--; else _helmetDur = 99;
-                        if (_chestDur > 20) _chestDur--; else _chestDur = 99;
-                        if (_legsDur > 20) _legsDur--; else _legsDur = 99;
-                        if (_bootsDur > 20) _bootsDur--; else _bootsDur = 99;
-                    }
-                }
-
-                // RSHIFT tuş takibi (Sadece Minecraft öndeyken mod menüsünü açar/kapatır)
-                bool curRshift = (GetAsyncKeyState(0xA1) & 0x8000) != 0;
-                if (curRshift && !_rshift)
-                {
-                    if (_main.InvokeRequired)
-                        _main.BeginInvoke(new Action(() => _main.ShowPvpOverlay()));
-                    else
-                        _main.ShowPvpOverlay();
-                }
-                _rshift = curRshift;
-
-                _fpsVal = _actualFps;
-                this.Invalidate();
-            };
-            _fpsTimer.Start();
-
-            this.Paint += (s, e) => DrawHud(e.Graphics);
-            UpdatePosition();
-        }
-
-        [DllImport("user32.dll")] private static extern short GetKeyState(int vKey);
-
-        private void UpdatePosition()
-        {
-            try
-            {
-                RECT clientRect;
-                if (GetClientRect(_mcHandle, out clientRect))
-                {
-                    POINT pt = new POINT { X = 0, Y = 0 };
-                    ClientToScreen(_mcHandle, ref pt);
-
-                    int w = clientRect.Right - clientRect.Left;
-                    int h = clientRect.Bottom - clientRect.Top;
-
-                    if (this.Location.X != pt.X || this.Location.Y != pt.Y || this.Width != w || this.Height != h)
-                    {
-                        this.Location = new Point(pt.X, pt.Y);
-                        this.Size = new Size(w, h);
-                    }
-                }
-            }
-            catch { }
-        }
-
-        private void DrawHud(Graphics g)
-        {
-            if (_main == null) return;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
-            int w = this.Width;
-            int h = this.Height;
-
-            // 1. CPS SAYAÇLARI (Sağ Üst)
-            if (_main.pvpCpsEnabled)
-            {
-                using (Font font = new Font("Segoe UI", 9F, FontStyle.Bold))
-                {
-                    string txt = string.Format("LMB: {0} CPS | RMB: {1} CPS", _lmbCps, _rmbCps);
-                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(150, 15, 13, 28)))
-                        g.FillRectangle(sb, w - 180, 50, 160, 28);
-                    using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
-                        g.DrawRectangle(p, w - 180, 50, 160, 28);
-                    g.DrawString(txt, font, Brushes.White, new RectangleF(w - 180, 50, 160, 28), new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-                }
-            }
-
-            // 2. TOGGLE SPRINT
-            if (_main.pvpToggleSprintEnabled)
-            {
-                using (Font font = new Font("Segoe UI", 9F, FontStyle.Bold))
-                {
-                    string txt = "[🏃 Sprint: Aktif]";
-                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(150, 15, 13, 28)))
-                        g.FillRectangle(sb, w - 180, 82, 160, 24);
-                    using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
-                        g.DrawRectangle(p, w - 180, 82, 160, 24);
-                    g.DrawString(txt, font, Brushes.Cyan, new RectangleF(w - 180, 82, 160, 24), new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-                }
-            }
-
-            // 3. KEYSTROKES (Sol Alt)
-            if (_main.pvpKeystrokesEnabled)
-            {
-                int ksX = 30;
-                int ksY = h - 180;
-
-                // W, A, S, D Kutuları
-                DrawKeyBox(g, "W", ksX + 38, ksY, 34, 34, _w);
-                DrawKeyBox(g, "A", ksX, ksY + 38, 34, 34, _a);
-                DrawKeyBox(g, "S", ksX + 38, ksY + 38, 34, 34, _s);
-                DrawKeyBox(g, "D", ksX + 76, ksY + 38, 34, 34, _d);
-                // Space Kutusu
-                DrawKeyBox(g, "───────────", ksX, ksY + 76, 110, 20, _space);
-            }
-
-            // 4. ARMOR & ITEM DURABILITY (Sağ Alt)
-            if (_main.pvpArmorStatusEnabled)
-            {
-                int armX = w - 180;
-                int armY = h - 180;
-                using (Font font = new Font("Segoe UI", 8.5F, FontStyle.Bold))
-                {
-                    // Koruma Paneli Arka Planı
-                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(150, 15, 13, 28)))
-                        g.FillRectangle(sb, armX, armY, 160, 94);
-                    using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
-                        g.DrawRectangle(p, armX, armY, 160, 94);
-
-                    g.DrawString(string.Format("🛡️ Kask: %{0}", _helmetDur), font, Brushes.White, armX + 10, armY + 8);
-                    g.DrawString(string.Format("👕 Zırh: %{0}", _chestDur), font, Brushes.White, armX + 10, armY + 28);
-                    g.DrawString(string.Format("👖 Pantolon: %{0}", _legsDur), font, Brushes.White, armX + 10, armY + 48);
-                    g.DrawString(string.Format("👟 Bot: %{0}", _bootsDur), font, Brushes.White, armX + 10, armY + 68);
-                }
-            }
-
-            // 5. COMPASS DIRECTION HUD (Sol Üst)
-            if (_main.pvpCompassEnabled)
-            {
-                using (Font font = new Font("Segoe UI", 10F, FontStyle.Bold))
-                {
-                    string dir = "N (Kuzey)";
-                    if (_w && _d) dir = "NE (Kuzeydoğu)";
-                    else if (_w && _a) dir = "NW (Kuzeybatı)";
-                    else if (_s && _d) dir = "SE (Güneydoğu)";
-                    else if (_s && _a) dir = "SW (Güneybatı)";
-                    else if (_w) dir = "N (Kuzey)";
-                    else if (_s) dir = "S (Güney)";
-                    else if (_a) dir = "W (Batı)";
-                    else if (_d) dir = "E (Doğu)";
-                    g.DrawString("🧭 Yön: " + dir, font, Brushes.LimeGreen, 30, 50);
-                }
-            }
-
-            // 6. FPS VE PING
-            using (Font f = new Font("Segoe UI", 9.5F, FontStyle.Bold))
-            {
-                g.DrawString("FPS: " + _fpsVal + " | Ping: 12ms", f, Brushes.Cyan, 30, 80);
-            }
-
-            // 7. POTION EFFECTS OVERLAY (Sol Üst, FPS'in Altı)
-            if (_main.pvpPotionHudEnabled)
-            {
-                int potY = 110;
-                using (Font font = new Font("Segoe UI", 8.5F, FontStyle.Bold))
-                {
-                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(140, 15, 13, 28)))
-                    {
-                        int minSpeed = _potionSecSpeed / 60;
-                        int secSpeed = _potionSecSpeed % 60;
-                        g.FillRectangle(sb, 30, potY, 140, 24);
-                        using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
-                            g.DrawRectangle(p, 30, potY, 140, 24);
-                        g.DrawString(string.Format("⚡ Hız II ({0}:{1:D2})", minSpeed, secSpeed), font, Brushes.Yellow, 34, potY + 4);
-
-                        int minStr = _potionSecStrength / 60;
-                        int secStr = _potionSecStrength % 60;
-                        g.FillRectangle(sb, 30, potY + 28, 140, 24);
-                        using (Pen p = new Pen(Color.FromArgb(139, 92, 246), 1))
-                            g.DrawRectangle(p, 30, potY + 28, 140, 24);
-                        g.DrawString(string.Format("💪 Güç I ({0}:{1:D2})", minStr, secStr), font, Brushes.OrangeRed, 34, potY + 32);
-                    }
-                }
-            }
-
-            // 8. CUSTOM CROSSHAIR
-            if (_main.pvpCrosshairEnabled)
-            {
-                int cx = w / 2;
-                int cy = h / 2;
-                using (Pen p = new Pen(Color.Cyan, 2f))
-                {
-                    g.DrawLine(p, cx - 8, cy, cx + 8, cy);
-                    g.DrawLine(p, cx, cy - 8, cx, cy + 8);
-                    g.FillEllipse(Brushes.White, cx - 2, cy - 2, 4, 4);
-                }
-            }
-        }
-
-        private void DrawKeyBox(Graphics g, string key, int x, int y, int w, int h, bool active)
-        {
-            Color boxColor = active ? Color.FromArgb(200, 139, 92, 246) : Color.FromArgb(140, 15, 13, 28);
-            Color border = active ? Color.Cyan : Color.FromArgb(60, 139, 92, 246);
-
-            using (SolidBrush sb = new SolidBrush(boxColor))
-                g.FillRectangle(sb, x, y, w, h);
-            using (Pen p = new Pen(border, 1))
-                g.DrawRectangle(p, x, y, w, h);
-
-            using (Font f = new Font("Segoe UI", 9F, FontStyle.Bold))
-            {
-                TextRenderer.DrawText(g, key, f, new Rectangle(x, y, w, h), Color.White, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
-            }
-        }
-
-        protected override void OnFormClosed(FormClosedEventArgs e)
-        {
-            if (_trackTimer != null) { _trackTimer.Stop(); _trackTimer.Dispose(); }
-            if (_fpsTimer != null) { _fpsTimer.Stop(); _fpsTimer.Dispose(); }
-            base.OnFormClosed(e);
-        }
-    }
+    // PvP HUD overlay forms removed.
 
     // ══════════════════════════════════════════════════════════════════════════
     //  MAIN LAUNCHER FORM (LiteNex Client v6.0 Ultimate Edition)
@@ -676,7 +210,7 @@ namespace LiteNexLauncher
         private TextBox txtUsername, txtSearchVer, txtServerIp, txtCustomJvmArgs, txtCustomServerName, txtWallpaperPath;
         private ComboBox cbVersions, cbJavaPath, cbClientType, cbResolution, cbProfiles, cbThemes;
         private CheckBox chkFullscreen, chkFpsBoost;
-        private Button  btnPlay, btnNavPlay, btnNavVersions, btnNavServers, btnNavSettings, btnNavPvpMods, btnSoundToggle;
+        private Button  btnPlay, btnNavPlay, btnNavVersions, btnNavServers, btnNavSettings, btnSoundToggle;
         private Panel   progressBg, progressFill;
         private Label   lblStatus, lblUserName;
         private RichTextBox txtConsole;
@@ -686,64 +220,12 @@ namespace LiteNexLauncher
         private FlowLayoutPanel flowVersionsList, flowModsList, flowServersList, flowSavesList;
         private System.Windows.Forms.Timer sysMonitorTimer;
 
-        private Panel   pvpModsPanel, pnlHudPreview;
-        public bool    pvpCpsEnabled = true, pvpKeystrokesEnabled = true, pvpArmorStatusEnabled = true;
-        public bool    pvpPotionHudEnabled = true, pvpCompassEnabled = true, pvpCrosshairEnabled = true, pvpToggleSprintEnabled = true;
         private string  gameDir, versionsDir, javaPathDetected, customWallpaperPath = "";
         private Image customWallpaperImg = null;
         private Dictionary<int, string> detectedJavas = new Dictionary<int, string>();
         private List<string> allMojangVersions = new List<string>();
         private List<string> savedProfiles = new List<string> { "LitePlayer", "ProGamer", "Steve", "Alex" };
         private Process activeMcProcess = null;
-        private PvpOverlayForm    _pvpOverlay;       // Oyun üstü overlay
-
-        public void SavePvpConfigToDisk()
-        {
-            try
-            {
-                string pvpFile = Path.Combine(gameDir, "litenex_pvp_config.json");
-                var cfg = new Dictionary<string, bool>();
-                cfg["cps"] = pvpCpsEnabled;
-                cfg["keystrokes"] = pvpKeystrokesEnabled;
-                cfg["armorStatus"] = pvpArmorStatusEnabled;
-                cfg["potionHud"] = pvpPotionHudEnabled;
-                cfg["compass"] = pvpCompassEnabled;
-                cfg["crosshair"] = pvpCrosshairEnabled;
-                cfg["toggleSprint"] = pvpToggleSprintEnabled;
-
-                JavaScriptSerializer jss = new JavaScriptSerializer();
-                File.WriteAllText(pvpFile, jss.Serialize(cfg));
-                
-                // Sağdaki HUD Önizlemesini de anlık güncelle
-                if (pnlHudPreview != null) pnlHudPreview.Invalidate();
-            }
-            catch { }
-        }
-
-        public void LoadPvpConfigFromDisk()
-        {
-            try
-            {
-                string pvpFile = Path.Combine(gameDir, "litenex_pvp_config.json");
-                if (File.Exists(pvpFile))
-                {
-                    string json = File.ReadAllText(pvpFile);
-                    JavaScriptSerializer jss = new JavaScriptSerializer();
-                    var cfg = jss.Deserialize<Dictionary<string, object>>(json);
-                    if (cfg != null)
-                    {
-                        if (cfg.ContainsKey("cps")) pvpCpsEnabled = Convert.ToBoolean(cfg["cps"]);
-                        if (cfg.ContainsKey("keystrokes")) pvpKeystrokesEnabled = Convert.ToBoolean(cfg["keystrokes"]);
-                        if (cfg.ContainsKey("armorStatus")) pvpArmorStatusEnabled = Convert.ToBoolean(cfg["armorStatus"]);
-                        if (cfg.ContainsKey("potionHud")) pvpPotionHudEnabled = Convert.ToBoolean(cfg["potionHud"]);
-                        if (cfg.ContainsKey("compass")) pvpCompassEnabled = Convert.ToBoolean(cfg["compass"]);
-                        if (cfg.ContainsKey("crosshair")) pvpCrosshairEnabled = Convert.ToBoolean(cfg["crosshair"]);
-                        if (cfg.ContainsKey("toggleSprint")) pvpToggleSprintEnabled = Convert.ToBoolean(cfg["toggleSprint"]);
-                    }
-                }
-            }
-            catch { }
-        }
 
         private List<Tuple<string, string>> savedServers = new List<Tuple<string, string>>
         {
@@ -759,28 +241,12 @@ namespace LiteNexLauncher
             this.DoubleBuffered = true;
             SetupLauncherPaths();
             InitializeComponent();
-            LoadPvpConfigFromDisk(); // PvP ayarlarını diskten oku
             LoadVersionsAsync();
             DetectJavaAndSystem();
             StartSystemMonitor();
             CheckForGitHubUpdatesAsync(silent: true);
         }
-        [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
 
-        public void ShowPvpOverlay()
-        {
-            try
-            {
-                if (_pvpOverlay != null && !_pvpOverlay.IsDisposed && _pvpOverlay.Visible)
-                {
-                    _pvpOverlay.Close();
-                    return; // İkinci RSHIFT: kapat (toggle)
-                }
-                _pvpOverlay = new PvpOverlayForm(this);
-                _pvpOverlay.Show();
-            }
-            catch { }
-        }
 
         private void SetupLauncherPaths()
         {
@@ -1088,19 +554,17 @@ namespace LiteNexLauncher
             btnNavPlay     = MakeNavBtn("🎮   Oyna",            138);
             btnNavVersions = MakeNavBtn("📦   Sürümler & Modlar", 188);
             btnNavServers  = MakeNavBtn("📡   Sunucu & Ping Testi",238);
-            btnNavPvpMods  = MakeNavBtn("⚔️   PvP Client Modları", 288);
-            btnNavSettings = MakeNavBtn("⚙️   Ayarlar & Temalar",  338);
+            btnNavSettings = MakeNavBtn("⚙️   Ayarlar & Temalar",  288);
 
             sidebarPanel.Controls.Add(btnNavPlay);
             sidebarPanel.Controls.Add(btnNavVersions);
             sidebarPanel.Controls.Add(btnNavServers);
-            sidebarPanel.Controls.Add(btnNavPvpMods);
             sidebarPanel.Controls.Add(btnNavSettings);
 
             btnSoundToggle = new Button
             {
                 Text = "🔇  Ses Efektleri: Kapalı",
-                Location = new Point(16, 348),
+                Location = new Point(16, 338),
                 Size = new Size(228, 36),
                 FlatStyle = FlatStyle.Flat,
                 ForeColor = ThemeManager.C_MUTED,
@@ -1563,7 +1027,6 @@ namespace LiteNexLauncher
 
             Label lblResH = new Label { Text = "OYUN ÇÖZÜNÜRLÜĞÜ", Location = new Point(24, 225), AutoSize = true, Font = new Font("Segoe UI", 8F, FontStyle.Bold), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
             cbResolution = new ComboBox { Location = new Point(24, 245), Width = 320, DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(16, 14, 32), ForeColor = ThemeManager.C_TEXT, Font = new Font("Segoe UI", 9.5F) };
-            cbResolution.Items.Add("1920 x 1080 (Full HD)"); cbResolution.Items.Add("1280 x 720 (HD)"); cbResolution.Items.Add("1024 x 768 (Standard)");
             cbResolution.SelectedIndex = 0;
 
             chkFullscreen = new CheckBox { Text = "Tam Ekran Başlat (Fullscreen)", Location = new Point(365, 245), AutoSize = true, ForeColor = ThemeManager.C_TEXT, Font = new Font("Segoe UI", 9.5F), BackColor = Color.Transparent };
@@ -1601,116 +1064,17 @@ namespace LiteNexLauncher
             settingsCard.Controls.Add(lblJavaH); settingsCard.Controls.Add(cbJavaPath);
             settingsCard.Controls.Add(btnSave); settingsCard.Controls.Add(btnCheckUpdates);
             settingsPanel.Controls.Add(settingsCard);
-
-            // ══════════════════════════════════════════════════════════════════
-            //  TAB 5: PVP CLIENT MODS SUITE & LIVE HUD PREVIEW PANEL
-            // ══════════════════════════════════════════════════════════════════
-            pvpModsPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Visible = false };
-
-            Panel pvpLeftCard = new Panel { Location = new Point(24, 16), Size = new Size(460, 744), BackColor = ThemeManager.C_CARD };
-            pvpLeftCard.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (GraphicsPath path = GetRoundedPath(new Rectangle(0, 0, pvpLeftCard.Width - 1, pvpLeftCard.Height - 1), 12))
-                {
-                    using (SolidBrush sb = new SolidBrush(ThemeManager.C_CARD)) e.Graphics.FillPath(sb, path);
-                    using (Pen p = new Pen(ThemeManager.C_BORDER)) e.Graphics.DrawPath(p, path);
-                }
-                using (LinearGradientBrush tl = new LinearGradientBrush(new Rectangle(12, 0, pvpLeftCard.Width - 24, 3), ThemeManager.C_PURPLE, ThemeManager.C_EMERALD, LinearGradientMode.Horizontal))
-                    e.Graphics.FillRectangle(tl, 12, 0, pvpLeftCard.Width - 24, 3);
-            };
-
-            Label lblPvpTitle = new Label { Text = "⚔️ LiteNex PvP Client & Oyun İçi Modlar", Location = new Point(20, 20), AutoSize = true, Font = new Font("Segoe UI", 14F, FontStyle.Bold), ForeColor = ThemeManager.C_TEXT, BackColor = Color.Transparent };
-            Label lblPvpSub   = new Label { Text = "PvP Modları oyun içerisinden Right Shift (RSHIFT) tuşu ile açılır ve yönetilir.", Location = new Point(20, 48), AutoSize = true, Font = new Font("Segoe UI", 8.5F), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
-
-            // Hotkey Instruction Box
-            Panel hotkeyCard = new Panel { Location = new Point(20, 78), Size = new Size(420, 80), BackColor = Color.FromArgb(25, 124, 58, 237) };
-            hotkeyCard.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (Pen p = new Pen(ThemeManager.C_PURPLE, 1.5f))
-                    e.Graphics.DrawRectangle(p, 0, 0, hotkeyCard.Width - 1, hotkeyCard.Height - 1);
-            };
-            Label lblKeyTitle = new Label { Text = "⌨️ OYUN İÇİ MENÜ KISAYOL TUŞU", Location = new Point(14, 10), AutoSize = true, Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), ForeColor = ThemeManager.C_PURPLE_L, BackColor = Color.Transparent };
-            Label lblKeyBadge = new Label { Text = "RIGHT SHIFT (RSHIFT)", Location = new Point(14, 30), AutoSize = true, Font = new Font("Segoe UI", 12F, FontStyle.Bold), ForeColor = Color.White, BackColor = Color.Transparent };
-            Label lblKeyDesc  = new Label { Text = "Oyundayken Right Shift tuşuna basarak PvP Client menüsünü açabilir, tüm modları özelleştirebilirsiniz.", Location = new Point(14, 54), Size = new Size(392, 22), Font = new Font("Segoe UI", 8F), ForeColor = Color.FromArgb(200, 220, 240), BackColor = Color.Transparent };
-            hotkeyCard.Controls.Add(lblKeyTitle);
-            hotkeyCard.Controls.Add(lblKeyBadge);
-            hotkeyCard.Controls.Add(lblKeyDesc);
-            pvpLeftCard.Controls.Add(hotkeyCard);
-
-            int pvpY = 170;
-            Action<string, string> AddPvpModInfoRow = (title, badgeText) =>
-            {
-                Panel tCard = new Panel { Location = new Point(20, pvpY), Size = new Size(420, 44), BackColor = ThemeManager.C_CARD2 };
-                tCard.Paint += (s, e) =>
-                {
-                    using (Pen p = new Pen(ThemeManager.C_BORDER))
-                        e.Graphics.DrawRectangle(p, 0, 0, tCard.Width - 1, tCard.Height - 1);
-                };
-
-                Label lblT = new Label { Text = title, Location = new Point(12, 0), Size = new Size(260, 44), Font = new Font("Segoe UI", 9F, FontStyle.Bold), ForeColor = Color.White, TextAlign = ContentAlignment.MiddleLeft, BackColor = Color.Transparent };
-                Label lblB = new Label
-                {
-                    Text = badgeText,
-                    Location = new Point(275, 8),
-                    Size = new Size(135, 28),
-                    BackColor = Color.FromArgb(30, 16, 185, 129),
-                    ForeColor = ThemeManager.C_EMERALD,
-                    Font = new Font("Segoe UI", 8F, FontStyle.Bold),
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-
-                tCard.Controls.Add(lblT);
-                tCard.Controls.Add(lblB);
-                pvpLeftCard.Controls.Add(tCard);
-                pvpY += 50;
-            };
-
-            AddPvpModInfoRow("🖱️   CPS Counter HUD (LMB/RMB CPS)", "Oyun İçi RSHIFT ⌨️");
-            AddPvpModInfoRow("⌨️   Keystrokes Visualizer (WASD)", "Oyun İçi RSHIFT ⌨️");
-            AddPvpModInfoRow("🛡️   Armor & Item Durability HUD", "Oyun İçi RSHIFT ⌨️");
-            AddPvpModInfoRow("🧪   Potion Effects Overlay", "Oyun İçi RSHIFT ⌨️");
-            AddPvpModInfoRow("🧭   Compass Direction HUD", "Oyun İçi RSHIFT ⌨️");
-            AddPvpModInfoRow("🎯   Custom Crosshair Mod", "Oyun İçi RSHIFT ⌨️");
-            AddPvpModInfoRow("⚡   Toggle Sprint & Zoomify", "Oyun İçi RSHIFT ⌨️");
-
-            pvpLeftCard.Controls.Add(lblPvpTitle); pvpLeftCard.Controls.Add(lblPvpSub);
-            pvpModsPanel.Controls.Add(pvpLeftCard);
-
-            // Right Panel (Live HUD Simulator / Preview Box)
-            Panel pvpRightCard = new Panel { Location = new Point(500, 16), Size = new Size(490, 744), BackColor = ThemeManager.C_CARD };
-            pvpRightCard.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (GraphicsPath path = GetRoundedPath(new Rectangle(0, 0, pvpRightCard.Width - 1, pvpRightCard.Height - 1), 12))
-                {
-                    using (SolidBrush sb = new SolidBrush(ThemeManager.C_CARD)) e.Graphics.FillPath(sb, path);
-                    using (Pen p = new Pen(ThemeManager.C_BORDER)) e.Graphics.DrawPath(p, path);
-                }
-            };
-
-            Label lblPrevTitle = new Label { Text = "📺 Canlı Oyun İçi HUD Önizlemesi", Location = new Point(20, 20), AutoSize = true, Font = new Font("Segoe UI", 14F, FontStyle.Bold), ForeColor = ThemeManager.C_CYAN, BackColor = Color.Transparent };
-            Label lblPrevSub   = new Label { Text = "Oyun içinde Right Shift (RSHIFT) tuşuna basıldığında açılan PvP mod arayüzüdür.", Location = new Point(20, 50), AutoSize = true, Font = new Font("Segoe UI", 8.5F), ForeColor = ThemeManager.C_MUTED, BackColor = Color.Transparent };
-
-            pnlHudPreview = new Panel { Location = new Point(20, 88), Size = new Size(450, 630), BackColor = Color.FromArgb(12, 10, 24) };
-            pnlHudPreview.Paint += (s, e) => DrawHudPreview(e.Graphics, pnlHudPreview.Width, pnlHudPreview.Height);
-
-            pvpRightCard.Controls.Add(lblPrevTitle); pvpRightCard.Controls.Add(lblPrevSub);
-            pvpRightCard.Controls.Add(pnlHudPreview);
-            pvpModsPanel.Controls.Add(pvpRightCard);
-
-            // Nav Wiring
+               // Nav Wiring
             btnNavPlay.Click += (s, e) =>
             {
                 SoundSystem.PlayClick();
-                playPanel.Visible = true; versionsPanel.Visible = false; serversPanel.Visible = false; settingsPanel.Visible = false; if (pvpModsPanel != null) pvpModsPanel.Visible = false;
+                playPanel.Visible = true; versionsPanel.Visible = false; serversPanel.Visible = false; settingsPanel.Visible = false;
                 SetNavActive(btnNavPlay);
             };
             btnNavVersions.Click += (s, e) =>
             {
                 SoundSystem.PlayClick();
-                playPanel.Visible = false; versionsPanel.Visible = true; serversPanel.Visible = false; settingsPanel.Visible = false; if (pvpModsPanel != null) pvpModsPanel.Visible = false;
+                playPanel.Visible = false; versionsPanel.Visible = true; serversPanel.Visible = false; settingsPanel.Visible = false;
                 SetNavActive(btnNavVersions);
                 PopulateVersionsFlow();
                 PopulateSavesFlow();
@@ -1718,187 +1082,25 @@ namespace LiteNexLauncher
             btnNavServers.Click += (s, e) =>
             {
                 SoundSystem.PlayClick();
-                playPanel.Visible = false; versionsPanel.Visible = false; serversPanel.Visible = true; settingsPanel.Visible = false; if (pvpModsPanel != null) pvpModsPanel.Visible = false;
+                playPanel.Visible = false; versionsPanel.Visible = false; serversPanel.Visible = true; settingsPanel.Visible = false;
                 SetNavActive(btnNavServers);
                 PopulateServersFlow();
-            };
-            btnNavPvpMods.Click += (s, e) =>
-            {
-                SoundSystem.PlayClick();
-                playPanel.Visible = false; versionsPanel.Visible = false; serversPanel.Visible = false; settingsPanel.Visible = false; if (pvpModsPanel != null) pvpModsPanel.Visible = true;
-                SetNavActive(btnNavPvpMods);
             };
             btnNavSettings.Click += (s, e) =>
             {
                 SoundSystem.PlayClick();
-                playPanel.Visible = false; versionsPanel.Visible = false; serversPanel.Visible = false; settingsPanel.Visible = true; if (pvpModsPanel != null) pvpModsPanel.Visible = false;
+                playPanel.Visible = false; versionsPanel.Visible = false; serversPanel.Visible = false; settingsPanel.Visible = true;
                 SetNavActive(btnNavSettings);
             };
 
             mainPanel.Controls.Add(playPanel); mainPanel.Controls.Add(versionsPanel);
-            mainPanel.Controls.Add(serversPanel); mainPanel.Controls.Add(settingsPanel); mainPanel.Controls.Add(pvpModsPanel);
+            mainPanel.Controls.Add(serversPanel); mainPanel.Controls.Add(settingsPanel);
             this.Controls.Add(mainPanel); this.Controls.Add(sidebarPanel); this.Controls.Add(titleBar);
 
             SetNavActive(btnNavPlay);
             UpdatePlayerAvatar("LitePlayer");
             LoadConfigFromDisk();
             Log("[SYS] LiteNex Client v" + CURRENT_VERSION_NAME + " Ultimate Edition Hazır.", ThemeManager.C_CYAN);
-        }
-
-        // ══════════════════════════════════════════════════════════════════════
-        //  PVP CLIENT HUD SIMULATOR PREVIEW DRAWING
-        // ══════════════════════════════════════════════════════════════════════
-        private void DrawHudPreview(Graphics g, int w, int h)
-        {
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
-            // Simulated Minecraft World Background
-            using (LinearGradientBrush bg = new LinearGradientBrush(new Rectangle(0, 0, w, h), Color.FromArgb(20, 35, 60), Color.FromArgb(10, 15, 30), LinearGradientMode.Vertical))
-                g.FillRectangle(bg, 0, 0, w, h);
-
-            // Menu Hotkey Reminder Banner at top of preview
-            int bannerW = 320;
-            int bannerX = (w - bannerW) / 2;
-            using (SolidBrush sb = new SolidBrush(Color.FromArgb(200, 124, 58, 237)))
-                g.FillRectangle(sb, bannerX, 10, bannerW, 26);
-            using (Pen p = new Pen(ThemeManager.C_PURPLE_L, 1.5f))
-                g.DrawRectangle(p, bannerX, 10, bannerW, 26);
-            using (Font f = new Font("Segoe UI", 8.5F, FontStyle.Bold))
-            {
-                StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                g.DrawString("⌨️ Oyun İçi Menü: RIGHT SHIFT (RSHIFT)", f, Brushes.White, new Rectangle(bannerX, 10, bannerW, 26), sf);
-            }
-
-            // FPS & Ping Display
-            using (Font f = new Font("Segoe UI", 9F, FontStyle.Bold))
-            {
-                g.DrawString("FPS: 240  |  Ping: 14ms", f, Brushes.Lime, 14, 44);
-                if (pvpToggleSprintEnabled)
-                {
-                    g.DrawString("[Sprint: Toggled]", f, Brushes.Cyan, 160, 44);
-                }
-            }
-
-            // Compass Bar
-            if (pvpCompassEnabled)
-            {
-                int compW = 220;
-                int compX = (w - compW) / 2;
-                using (SolidBrush sb = new SolidBrush(Color.FromArgb(160, 10, 10, 20)))
-                    g.FillRectangle(sb, compX, 42, compW, 22);
-                using (Pen p = new Pen(ThemeManager.C_BORDER))
-                    g.DrawRectangle(p, compX, 42, compW, 22);
-                using (Font f = new Font("Segoe UI", 8.5F, FontStyle.Bold))
-                {
-                    g.DrawString("W  •  NW  •  [ N ]  •  NE  •  E", f, Brushes.White, compX + 18, 44);
-                }
-            }
-
-            // CPS Counter
-            if (pvpCpsEnabled)
-            {
-                using (SolidBrush sb = new SolidBrush(Color.FromArgb(160, 10, 10, 20)))
-                    g.FillRectangle(sb, w - 130, 44, 116, 32);
-                using (Pen p = new Pen(ThemeManager.C_CYAN))
-                    g.DrawRectangle(p, w - 130, 44, 116, 32);
-                using (Font f = new Font("Segoe UI", 9F, FontStyle.Bold))
-                {
-                    g.DrawString("12 LMB | 8 RMB", f, Brushes.Cyan, w - 124, 51);
-                }
-            }
-
-            // Potion Effects Overlay
-            if (pvpPotionHudEnabled)
-            {
-                int potY = 75;
-                using (Font f = new Font("Segoe UI", 8.5F, FontStyle.Bold))
-                {
-                    using (SolidBrush sb = new SolidBrush(Color.FromArgb(140, 10, 10, 20)))
-                    {
-                        g.FillRectangle(sb, 14, potY, 140, 26);
-                        g.DrawString("⚡ Speed II (1:45)", f, Brushes.Yellow, 18, potY + 4);
-                        g.FillRectangle(sb, 14, potY + 30, 140, 26);
-                        g.DrawString("💪 Strength I (0:30)", f, Brushes.OrangeRed, 18, potY + 34);
-                    }
-                }
-            }
-
-            // Crosshair Mod
-            if (pvpCrosshairEnabled)
-            {
-                int cx = w / 2;
-                int cy = h / 2;
-                using (Pen p = new Pen(ThemeManager.C_CYAN, 2f))
-                {
-                    g.DrawLine(p, cx - 8, cy, cx + 8, cy);
-                    g.DrawLine(p, cx, cy - 8, cx, cy + 8);
-                    g.FillEllipse(Brushes.White, cx - 2, cy - 2, 4, 4);
-                }
-            }
-
-            // Keystrokes Visualizer
-            if (pvpKeystrokesEnabled)
-            {
-                int ksX = 16;
-                int ksY = h - 140;
-                int kSize = 36;
-
-                Action<string, int, int, bool> DrawKey = (txt, x, y, pressed) =>
-                {
-                    Color bg = pressed ? ThemeManager.C_PURPLE : Color.FromArgb(160, 20, 20, 40);
-                    using (SolidBrush sb = new SolidBrush(bg))
-                        g.FillRectangle(sb, x, y, kSize, kSize);
-                    using (Pen p = new Pen(pressed ? ThemeManager.C_PURPLE_L : ThemeManager.C_BORDER))
-                        g.DrawRectangle(p, x, y, kSize, kSize);
-                    using (Font f = new Font("Segoe UI", 9F, FontStyle.Bold))
-                    {
-                        StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                        g.DrawString(txt, f, Brushes.White, new Rectangle(x, y, kSize, kSize), sf);
-                    }
-                };
-
-                DrawKey("W", ksX + kSize + 4, ksY, true);
-                DrawKey("A", ksX, ksY + kSize + 4, false);
-                DrawKey("S", ksX + kSize + 4, ksY + kSize + 4, false);
-                DrawKey("D", ksX + (kSize + 4) * 2, ksY + kSize + 4, false);
-
-                // Mouse buttons
-                int mbW = (kSize * 3 + 8 - 4) / 2;
-                using (SolidBrush sb = new SolidBrush(Color.FromArgb(160, 20, 20, 40)))
-                {
-                    g.FillRectangle(sb, ksX, ksY + (kSize + 4) * 2, mbW, 28);
-                    g.FillRectangle(sb, ksX + mbW + 4, ksY + (kSize + 4) * 2, mbW, 28);
-                }
-                using (Pen p = new Pen(ThemeManager.C_BORDER))
-                {
-                    g.DrawRectangle(p, ksX, ksY + (kSize + 4) * 2, mbW, 28);
-                    g.DrawRectangle(p, ksX + mbW + 4, ksY + (kSize + 4) * 2, mbW, 28);
-                }
-                using (Font f = new Font("Segoe UI", 8F, FontStyle.Bold))
-                {
-                    StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                    g.DrawString("LMB", f, Brushes.White, new Rectangle(ksX, ksY + (kSize + 4) * 2, mbW, 28), sf);
-                    g.DrawString("RMB", f, Brushes.White, new Rectangle(ksX + mbW + 4, ksY + (kSize + 4) * 2, mbW, 28), sf);
-                }
-            }
-
-            // Armor Status
-            if (pvpArmorStatusEnabled)
-            {
-                int armX = w - 130;
-                int armY = h - 140;
-                string[] armors = { "🪖 Helm: 94%", "🦺 Chest: 88%", "👖 Legs: 91%", "🥾 Boots: 100%" };
-                using (Font f = new Font("Segoe UI", 8.5F, FontStyle.Bold))
-                {
-                    for (int i = 0; i < armors.Length; i++)
-                    {
-                        using (SolidBrush sb = new SolidBrush(Color.FromArgb(140, 10, 10, 20)))
-                            g.FillRectangle(sb, armX, armY + (i * 28), 116, 24);
-                        g.DrawString(armors[i], f, Brushes.LightGreen, armX + 6, armY + (i * 28) + 4);
-                    }
-                }
-            }
         }
 
         // ── World Saves Flow Populator ─────────────────────────────────────────
@@ -2343,7 +1545,7 @@ namespace LiteNexLauncher
 
         private void SetNavActive(Button active)
         {
-            foreach (Button b in new[] { btnNavPlay, btnNavVersions, btnNavServers, btnNavPvpMods, btnNavSettings })
+            foreach (Button b in new[] { btnNavPlay, btnNavVersions, btnNavServers, btnNavSettings })
             {
                 if (b == null) continue;
                 b.BackColor = b == active ? ThemeManager.C_CARD2    : Color.Transparent;
@@ -2593,7 +1795,7 @@ namespace LiteNexLauncher
 
                         if (chkFpsBoost.Checked)
                         {
-                            extraJvmArgs += " -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M";
+                            extraJvmArgs += " -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=30 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=20 -XX:G1HeapRegionSize=32M -XX:+UseStringDeduplication -XX:+OptimizeStringConcat -XX:+UseCondCardMark -XX:+AlwaysPreTouch -XX:+UseNUMA -Dsun.graphics.maps=true -Dsun.java2d.opengl=true";
                         }
 
                         if (!string.IsNullOrWhiteSpace(txtCustomJvmArgs.Text))
@@ -2627,6 +1829,13 @@ namespace LiteNexLauncher
                             RedirectStandardOutput = true, RedirectStandardError = true,
                             CreateNoWindow = true
                         };
+                        try
+                        {
+                            psi.EnvironmentVariables["__NV_PRIME_RENDER_OFFLOAD"] = "1";
+                            psi.EnvironmentVariables["__GLX_VENDOR_LIBRARY_NAME"] = "nvidia";
+                            psi.EnvironmentVariables["SHED_GPUS"] = "1";
+                        }
+                        catch { }
 
                         Process mc = new Process { StartInfo = psi };
                         mc.OutputDataReceived += (s, a) => { if (!string.IsNullOrEmpty(a.Data)) Log("[MC] "     + a.Data, ThemeManager.C_TEXT); };
@@ -2635,21 +1844,16 @@ namespace LiteNexLauncher
                         activeMcProcess = mc;
                         mc.EnableRaisingEvents = true;
 
-                        GameHudOverlayForm hudOverlay = null;
-
                         mc.Exited += (s, a) =>
                         {
                             activeMcProcess = null;
-                            if (hudOverlay != null)
-                            {
-                                try { this.Invoke(new Action(() => hudOverlay.Close())); } catch {}
-                            }
                             if (!this.IsDisposed)
                             {
                                 try
                                 {
                                     this.Invoke(new Action(() =>
                                     {
+                                        this.WindowState = FormWindowState.Normal;
                                         btnPlay.Text = "  ▶    OYUNA BAŞLA";
                                         btnPlay.Enabled = true;
                                         btnPlay.BackColor = ThemeManager.C_PURPLE;
@@ -2663,23 +1867,9 @@ namespace LiteNexLauncher
                         };
 
                         mc.Start();
+                        try { mc.PriorityClass = ProcessPriorityClass.High; } catch {}
                         mc.BeginOutputReadLine();
                         mc.BeginErrorReadLine();
-
-                        // Oyuna HUD Overlay enjekte et
-                        try
-                        {
-                            Thread.Sleep(1500); // Pencerenin yüklenmesini bekle
-                            this.Invoke(new Action(() =>
-                            {
-                                if (mc != null && !mc.HasExited)
-                                {
-                                    hudOverlay = new GameHudOverlayForm(this, mc.MainWindowHandle);
-                                    hudOverlay.Show();
-                                }
-                            }));
-                        }
-                        catch { }
 
                         SetProgress(100, "Minecraft çalışıyor — PID " + mc.Id);
                         Log("[BAŞARILI] Minecraft başlatıldı! (PID: " + mc.Id + ")", ThemeManager.C_EMERALD);
@@ -2690,6 +1880,7 @@ namespace LiteNexLauncher
                             btnPlay.Text    = "  🛑    OYUNU DURDUR (FORCE EXIT)";
                             btnPlay.Enabled = true;
                             btnPlay.BackColor = Color.FromArgb(225, 29, 72);
+                            this.WindowState = FormWindowState.Minimized;
                         }));
 
                     }
@@ -3220,8 +2411,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 678;
-        public const string CURRENT_VERSION_NAME = "6.7.8";
+        public const int CURRENT_VERSION_CODE = 681;
+        public const string CURRENT_VERSION_NAME = "6.8.1";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
