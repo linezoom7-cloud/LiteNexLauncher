@@ -1,8 +1,8 @@
 {
-  "version": "6.6.3",
-  "versionCode": 663,
+  "version": "6.6.6",
+  "versionCode": 666,
   "downloadUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNex.exe",
   "setupUrl": "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/LiteNexSetup.exe",
-  "changelog": "\u2022 \u2728 Lunar Client tarzi premium mor-turkuaz gradient OYUNA BA\u015eLA butonu tasarlandi\n\u2022 \ud83d\udd06 Kart kenarliklari canli neon parildayan gradientlerle yenilendi\n\u2022 \ud83d\udd12 \u00c7ift a\u00e7ilma engeli ve anlik g\u00fcncelleme deste\u011fi entegre",
+  "changelog": "\u2022 \ud83d\udcbe RSHIFT PvP men\u00fcs\u00fc ayarlarinin diskte saklanmasi ve oyuna anlik yansitilmasi sa\u011flandi (litenex_pvp_config.json)",
   "mandatory": false
 }

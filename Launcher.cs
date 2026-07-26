@@ -222,38 +222,66 @@ namespace LiteNexLauncher
     }
 
     // ══════════════════════════════════════════════════════════════════════════
-    //  PVP OVERLAY FORM — oyun üzerindeçıkan sarı bildirim
+    //  PVP OVERLAY FORM
     // ══════════════════════════════════════════════════════════════════════════
     public class PvpOverlayForm : Form
     {
-        [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr hWnd);
-        [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        private MainForm _main;
+        private Rectangle[] _hitboxes;
 
-        private System.Windows.Forms.Timer _closeTimer;
-
-        public PvpOverlayForm()
+        public PvpOverlayForm(MainForm main)
         {
+            _main = main;
             this.FormBorderStyle = FormBorderStyle.None;
             this.ShowInTaskbar   = false;
             this.TopMost         = true;
             this.BackColor       = Color.FromArgb(12, 8, 24);
-            this.Opacity         = 0.94;
-            this.Size            = new Size(520, 380);
+            this.Opacity         = 0.96;
+            this.Size            = new Size(520, 360);
             this.StartPosition   = FormStartPosition.Manual;
 
-            // Ekranın sağ alt köşesine yerleştir
             Rectangle screen = Screen.PrimaryScreen.WorkingArea;
             this.Location = new Point(screen.Right - this.Width - 24, screen.Bottom - this.Height - 24);
 
+            _hitboxes = new Rectangle[7];
+            int yStart = 62;
+            for (int i = 0; i < 7; i++)
+            {
+                _hitboxes[i] = new Rectangle(12, yStart + i * 42, this.Width - 24, 36);
+            }
+
             this.Paint += (s, e) => DrawOverlay(e.Graphics);
+            this.MouseDown += OnOverlayClick;
+        }
 
-            // 8 saniye sonra kapat
-            _closeTimer = new System.Windows.Forms.Timer { Interval = 8000 };
-            _closeTimer.Tick += (s, e) => { _closeTimer.Stop(); this.Close(); };
-            _closeTimer.Start();
+        private void OnOverlayClick(object sender, MouseEventArgs e)
+        {
+            for (int i = 0; i < _hitboxes.Length; i++)
+            {
+                if (_hitboxes[i].Contains(e.Location))
+                {
+                    SoundSystem.PlayClick();
+                    ToggleMod(i);
+                    this.Invalidate();
+                    break;
+                }
+            }
+        }
 
-            // Tıklayınca kapat
-            this.Click += (s, e) => this.Close();
+        private void ToggleMod(int index)
+        {
+            if (_main == null) return;
+            switch (index)
+            {
+                case 0: _main.pvpCpsEnabled = !_main.pvpCpsEnabled; break;
+                case 1: _main.pvpKeystrokesEnabled = !_main.pvpKeystrokesEnabled; break;
+                case 2: _main.pvpArmorStatusEnabled = !_main.pvpArmorStatusEnabled; break;
+                case 3: _main.pvpPotionHudEnabled = !_main.pvpPotionHudEnabled; break;
+                case 4: _main.pvpCompassEnabled = !_main.pvpCompassEnabled; break;
+                case 5: _main.pvpCrosshairEnabled = !_main.pvpCrosshairEnabled; break;
+                case 6: _main.pvpToggleSprintEnabled = !_main.pvpToggleSprintEnabled; break;
+            }
+            _main.SavePvpConfigToDisk(); // Ayarları diske yaz (oyun anlık okur)
         }
 
         private void DrawOverlay(Graphics g)
@@ -262,28 +290,23 @@ namespace LiteNexLauncher
             g.SmoothingMode    = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
-            // Arka plan
             using (var bg = new System.Drawing.Drawing2D.LinearGradientBrush(new Rectangle(0, 0, w, h), Color.FromArgb(18, 12, 38), Color.FromArgb(8, 5, 18), System.Drawing.Drawing2D.LinearGradientMode.Vertical))
                 g.FillRectangle(bg, 0, 0, w, h);
 
-            // Mor kenarçizgisi
             using (var border = new Pen(Color.FromArgb(139, 92, 246), 2))
                 g.DrawRectangle(border, 1, 1, w - 3, h - 3);
 
-            // Üst banner
             using (var bannerBrush = new SolidBrush(Color.FromArgb(180, 99, 52, 210)))
                 g.FillRectangle(bannerBrush, 0, 0, w, 48);
             using (var bannerBorder = new Pen(Color.FromArgb(139, 92, 246), 1))
                 g.DrawLine(bannerBorder, 0, 48, w, 48);
 
-            using (var fTitle = new Font("Segoe UI", 14F, FontStyle.Bold))
+            using (var fTitle = new Font("Segoe UI", 12F, FontStyle.Bold))
                 g.DrawString("⚡ LiteNex PvP Client — Mod Menüsü", fTitle, Brushes.White, new RectangleF(14, 10, w - 28, 36), new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
 
-            // Kapat ipucu
             using (var fHint = new Font("Segoe UI", 7.5F))
-                g.DrawString("Tıkla veya 8 saniye bekle", fHint, new SolidBrush(Color.FromArgb(148, 163, 184)), new RectangleF(w - 130, 32, 120, 18), new StringFormat { Alignment = StringAlignment.Far });
+                g.DrawString("RSHIFT veya Dışarı Tıkla Kapat", fHint, new SolidBrush(Color.FromArgb(148, 163, 184)), new RectangleF(w - 180, 18, 170, 18), new StringFormat { Alignment = StringAlignment.Far });
 
-            // Mod satırları
             string[] mods = new string[]
             {
                 "📊  CPS Counter HUD (LMB / RMB)",
@@ -295,30 +318,46 @@ namespace LiteNexLauncher
                 "🏃  Toggle Sprint & Zoomify"
             };
 
+            bool[] states = new bool[]
+            {
+                _main.pvpCpsEnabled,
+                _main.pvpKeystrokesEnabled,
+                _main.pvpArmorStatusEnabled,
+                _main.pvpPotionHudEnabled,
+                _main.pvpCompassEnabled,
+                _main.pvpCrosshairEnabled,
+                _main.pvpToggleSprintEnabled
+            };
+
             int yStart = 62;
             for (int i = 0; i < mods.Length; i++)
             {
                 int rowY = yStart + i * 42;
-                // Satır arka planı
+                bool isEnabled = states[i];
+
                 using (var rowBg = new SolidBrush(i % 2 == 0 ? Color.FromArgb(30, 139, 92, 246) : Color.FromArgb(15, 139, 92, 246)))
                     g.FillRectangle(rowBg, 12, rowY, w - 24, 36);
-                // Sol aksentçizi
-                using (var accentPen = new Pen(Color.FromArgb(139, 92, 246), 3))
+
+                Color accentCol = isEnabled ? ThemeManager.C_CYAN : ThemeManager.C_MUTED;
+                using (var accentPen = new Pen(accentCol, 3))
                     g.DrawLine(accentPen, 12, rowY + 4, 12, rowY + 32);
 
                 using (var fMod = new Font("Segoe UI", 9.5F, FontStyle.Bold))
-                    g.DrawString(mods[i], fMod, Brushes.White, new RectangleF(24, rowY + 2, w - 80, 32), new StringFormat { LineAlignment = StringAlignment.Center });
+                    g.DrawString(mods[i], fMod, Brushes.White, new RectangleF(24, rowY + 2, w - 120, 32), new StringFormat { LineAlignment = StringAlignment.Center });
 
-                using (var fStatus = new Font("Segoe UI", 8F))
-                    g.DrawString("✔ Aktif", fStatus, new SolidBrush(Color.FromArgb(16, 185, 129)), new RectangleF(w - 70, rowY + 2, 60, 32), new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center });
+                // Durum Buton Metni
+                string statusText = isEnabled ? "✔ AKTİF" : "❌ KAPALI";
+                Color statusCol = isEnabled ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
+
+                using (var fStatus = new Font("Segoe UI", 8.5F, FontStyle.Bold))
+                    g.DrawString(statusText, fStatus, new SolidBrush(statusCol), new RectangleF(w - 110, rowY + 2, 98, 32), new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center });
             }
 
             // Alt yazı
             using (var fBottom = new Font("Segoe UI", 7.5F))
-                g.DrawString("LiteNex PvP Client  •  Modlar yapılandırmak için launcher'ı aç", fBottom, new SolidBrush(Color.FromArgb(100, 148, 163, 184)), new RectangleF(0, h - 22, w, 20), new StringFormat { Alignment = StringAlignment.Center });
+                g.DrawString("Değişiklikler anında oyuna yansır", fBottom, new SolidBrush(Color.FromArgb(100, 148, 163, 184)), new RectangleF(0, h - 22, w, 20), new StringFormat { Alignment = StringAlignment.Center });
         }
 
-        protected override void OnFormClosed(FormClosedEventArgs e) { if (_closeTimer != null) _closeTimer.Dispose(); base.OnFormClosed(e); }
         protected override bool ShowWithoutActivation { get { return true; } }
     }
 
@@ -348,8 +387,8 @@ namespace LiteNexLauncher
         private System.Windows.Forms.Timer sysMonitorTimer;
 
         private Panel   pvpModsPanel, pnlHudPreview;
-        private bool    pvpCpsEnabled = true, pvpKeystrokesEnabled = true, pvpArmorStatusEnabled = true;
-        private bool    pvpPotionHudEnabled = true, pvpCompassEnabled = true, pvpCrosshairEnabled = true, pvpToggleSprintEnabled = true;
+        public bool    pvpCpsEnabled = true, pvpKeystrokesEnabled = true, pvpArmorStatusEnabled = true;
+        public bool    pvpPotionHudEnabled = true, pvpCompassEnabled = true, pvpCrosshairEnabled = true, pvpToggleSprintEnabled = true;
         private string  gameDir, versionsDir, javaPathDetected, customWallpaperPath = "";
         private Image customWallpaperImg = null;
         private Dictionary<int, string> detectedJavas = new Dictionary<int, string>();
@@ -358,6 +397,54 @@ namespace LiteNexLauncher
         private Process activeMcProcess = null;
         private GlobalKeyboardHook _kbHook;          // Global RSHIFT dinleyici
         private PvpOverlayForm    _pvpOverlay;       // Oyun üstü overlay
+
+        public void SavePvpConfigToDisk()
+        {
+            try
+            {
+                string pvpFile = Path.Combine(gameDir, "litenex_pvp_config.json");
+                var cfg = new Dictionary<string, bool>();
+                cfg["cps"] = pvpCpsEnabled;
+                cfg["keystrokes"] = pvpKeystrokesEnabled;
+                cfg["armorStatus"] = pvpArmorStatusEnabled;
+                cfg["potionHud"] = pvpPotionHudEnabled;
+                cfg["compass"] = pvpCompassEnabled;
+                cfg["crosshair"] = pvpCrosshairEnabled;
+                cfg["toggleSprint"] = pvpToggleSprintEnabled;
+
+                JavaScriptSerializer jss = new JavaScriptSerializer();
+                File.WriteAllText(pvpFile, jss.Serialize(cfg));
+                
+                // Sağdaki HUD Önizlemesini de anlık güncelle
+                if (pnlHudPreview != null) pnlHudPreview.Invalidate();
+            }
+            catch { }
+        }
+
+        public void LoadPvpConfigFromDisk()
+        {
+            try
+            {
+                string pvpFile = Path.Combine(gameDir, "litenex_pvp_config.json");
+                if (File.Exists(pvpFile))
+                {
+                    string json = File.ReadAllText(pvpFile);
+                    JavaScriptSerializer jss = new JavaScriptSerializer();
+                    var cfg = jss.Deserialize<Dictionary<string, object>>(json);
+                    if (cfg != null)
+                    {
+                        if (cfg.ContainsKey("cps")) pvpCpsEnabled = Convert.ToBoolean(cfg["cps"]);
+                        if (cfg.ContainsKey("keystrokes")) pvpKeystrokesEnabled = Convert.ToBoolean(cfg["keystrokes"]);
+                        if (cfg.ContainsKey("armorStatus")) pvpArmorStatusEnabled = Convert.ToBoolean(cfg["armorStatus"]);
+                        if (cfg.ContainsKey("potionHud")) pvpPotionHudEnabled = Convert.ToBoolean(cfg["potionHud"]);
+                        if (cfg.ContainsKey("compass")) pvpCompassEnabled = Convert.ToBoolean(cfg["compass"]);
+                        if (cfg.ContainsKey("crosshair")) pvpCrosshairEnabled = Convert.ToBoolean(cfg["crosshair"]);
+                        if (cfg.ContainsKey("toggleSprint")) pvpToggleSprintEnabled = Convert.ToBoolean(cfg["toggleSprint"]);
+                    }
+                }
+            }
+            catch { }
+        }
 
         private List<Tuple<string, string>> savedServers = new List<Tuple<string, string>>
         {
@@ -373,6 +460,7 @@ namespace LiteNexLauncher
             this.DoubleBuffered = true;
             SetupLauncherPaths();
             InitializeComponent();
+            LoadPvpConfigFromDisk(); // PvP ayarlarını diskten oku
             LoadVersionsAsync();
             DetectJavaAndSystem();
             StartSystemMonitor();
@@ -422,7 +510,7 @@ namespace LiteNexLauncher
                     _pvpOverlay.Close();
                     return; // İkinci RSHIFT: kapat (toggle)
                 }
-                _pvpOverlay = new PvpOverlayForm();
+                _pvpOverlay = new PvpOverlayForm(this);
                 _pvpOverlay.Show();
             }
             catch { }
@@ -2844,8 +2932,8 @@ namespace LiteNexLauncher
         //  GITHUB AUTOMATIC AUTO-UPDATER
         // ══════════════════════════════════════════════════════════════════════
         public const string GITHUB_UPDATE_URL = "https://raw.githubusercontent.com/linezoom7-cloud/LiteNexLauncher/main/version.json";
-        public const int CURRENT_VERSION_CODE = 663;
-        public const string CURRENT_VERSION_NAME = "6.6.3";
+        public const int CURRENT_VERSION_CODE = 666;
+        public const string CURRENT_VERSION_NAME = "6.6.6";
 
         private void CheckForGitHubUpdatesAsync(bool silent)
         {
